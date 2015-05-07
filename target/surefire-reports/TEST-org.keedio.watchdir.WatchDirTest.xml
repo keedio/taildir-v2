@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuite tests="7" failures="0" name="org.keedio.watchdir.WatchDirTest" time="142.464" errors="0" skipped="0">
+<testsuite tests="7" failures="0" name="org.keedio.watchdir.WatchDirTest" time="142.45" errors="0" skipped="0">
   <properties>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
     <property name="sun.boot.library.path" value="/Library/Java/JavaVirtualMachines/jdk1.8.0_31.jdk/Contents/Home/jre/lib"/>
@@ -61,11 +61,11 @@
     <property name="ftp.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="sun.cpu.isalist" value=""/>
   </properties>
-  <testcase classname="org.keedio.watchdir.WatchDirTest" name="testCreatedButBlacklisted" time="20.071"/>
-  <testcase classname="org.keedio.watchdir.WatchDirTest" name="testCreatedAndBlacklisted" time="20.072"/>
-  <testcase classname="org.keedio.watchdir.WatchDirTest" name="testCreatedButNotWhitelisted" time="20.066"/>
-  <testcase classname="org.keedio.watchdir.WatchDirTest" name="test" time="20.064"/>
-  <testcase classname="org.keedio.watchdir.WatchDirTest" name="test2" time="2.01"/>
-  <testcase classname="org.keedio.watchdir.WatchDirTest" name="test3" time="40.117"/>
-  <testcase classname="org.keedio.watchdir.WatchDirTest" name="testCreatedAndWhitelisted" time="20.064"/>
+  <testcase classname="org.keedio.watchdir.WatchDirTest" name="testCreatedButBlacklisted" time="20.066"/>
+  <testcase classname="org.keedio.watchdir.WatchDirTest" name="testCreatedAndBlacklisted" time="20.07"/>
+  <testcase classname="org.keedio.watchdir.WatchDirTest" name="testCreatedButNotWhitelisted" time="20.065"/>
+  <testcase classname="org.keedio.watchdir.WatchDirTest" name="test" time="20.061"/>
+  <testcase classname="org.keedio.watchdir.WatchDirTest" name="test2" time="2.004"/>
+  <testcase classname="org.keedio.watchdir.WatchDirTest" name="test3" time="40.127"/>
+  <testcase classname="org.keedio.watchdir.WatchDirTest" name="testCreatedAndWhitelisted" time="20.057"/>
 </testsuite>
