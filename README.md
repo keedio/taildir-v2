@@ -1,4 +1,4 @@
-#flume-taild-v2-source
+#flume-taildir-v2-source
 Source of Flume NG for tailing files in a directory. This source is based on flume-taildirectory version.
 Next feature and fixes where added to the previous one:
 * The java native watch service was replaced by jpathwatch. Now events on file renames are triggered
