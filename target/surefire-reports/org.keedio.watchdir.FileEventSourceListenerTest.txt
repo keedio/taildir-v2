@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: org.keedio.watchdir.FileEventSourceListenerTest
+-------------------------------------------------------------------------------
+Tests run: 5, Failures: 0, Errors: 0, Skipped: 3, Time elapsed: 20.397 sec
