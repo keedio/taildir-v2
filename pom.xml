@@ -2,8 +2,8 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.apache.flume.sources-taildirectory</groupId>
-  <artifactId>flume-taildir-v2</artifactId>
+  <groupId>org.apache.flume.sources</groupId>
+  <artifactId>watchdir</artifactId>
   <version>1.0.0</version>
   <packaging>jar</packaging>
 

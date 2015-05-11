@@ -1,5 +1,10 @@
-org/keedio/watchdir/metrics/MetricsControllerTest.class
-org/keedio/watchdir/SerializeFilesThreadTest.class
-org/keedio/watchdir/WatchDirTest.class
-org/keedio/watchdir/WatchDirRegexTest.class
-org/keedio/watchdir/FileEventSourceListenerTest.class
+org/keedio/flume/source/watchdir/txt/SerializeFilesThreadTest.class
+org/keedio/flume/source/xml/metrics/MetricsControllerTest.class
+org/keedio/flume/source/watchdir/xml/WatchDirXMLWinEventSourceListener2Test.class
+org/keedio/flume/source/watchdir/txt/WatchDirTest.class
+org/keedio/flume/source/watchdir/xml/WatchDirRegexTest.class
+org/keedio/flume/souce/watchdir/metrics/MetricsControllerTest.class
+org/keedio/flume/source/watchdir/xml/WatchDirXMLWinEventSourceListenerTest.class
+org/keedio/flume/source/watchdir/xml/WatchDirTest.class
+org/keedio/flume/source/watchdir/txt/FileEventSourceListenerTest.class
+org/keedio/flume/source/watchdir/txt/WatchDirRegexTest.class

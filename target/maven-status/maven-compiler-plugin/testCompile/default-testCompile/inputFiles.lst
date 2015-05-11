@@ -1,5 +1,10 @@
-/Users/rolmo/repository/taildir-v2/src/test/java/org/keedio/watchdir/WatchDirTest.java
-/Users/rolmo/repository/taildir-v2/src/test/java/org/keedio/watchdir/metrics/MetricsControllerTest.java
-/Users/rolmo/repository/taildir-v2/src/test/java/org/keedio/watchdir/FileEventSourceListenerTest.java
-/Users/rolmo/repository/taildir-v2/src/test/java/org/keedio/watchdir/SerializeFilesThreadTest.java
-/Users/rolmo/repository/taildir-v2/src/test/java/org/keedio/watchdir/WatchDirRegexTest.java
+/Users/rolmo/projects/watchdir-source/src/test/java/org/keedio/flume/source/watchdir/xml/WatchDirTest.java
+/Users/rolmo/projects/watchdir-source/src/test/java/org/keedio/flume/source/watchdir/txt/SerializeFilesThreadTest.java
+/Users/rolmo/projects/watchdir-source/src/test/java/org/keedio/flume/source/watchdir/xml/WatchDirRegexTest.java
+/Users/rolmo/projects/watchdir-source/src/test/java/org/keedio/flume/source/watchdir/txt/WatchDirTest.java
+/Users/rolmo/projects/watchdir-source/src/test/java/org/keedio/flume/source/watchdir/xml/WatchDirXMLWinEventSourceListener2Test.java
+/Users/rolmo/projects/watchdir-source/src/test/java/org/keedio/flume/source/watchdir/txt/FileEventSourceListenerTest.java
+/Users/rolmo/projects/watchdir-source/src/test/java/org/keedio/flume/source/xml/metrics/MetricsControllerTest.java
+/Users/rolmo/projects/watchdir-source/src/test/java/org/keedio/flume/souce/watchdir/metrics/MetricsControllerTest.java
+/Users/rolmo/projects/watchdir-source/src/test/java/org/keedio/flume/source/watchdir/xml/WatchDirXMLWinEventSourceListenerTest.java
+/Users/rolmo/projects/watchdir-source/src/test/java/org/keedio/flume/source/watchdir/txt/WatchDirRegexTest.java
