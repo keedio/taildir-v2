@@ -2,8 +2,8 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>org.apache.flume.sources-taildirectory</groupId>
-  <artifactId>flume-taildir-v2</artifactId>
+  <groupId>org.apache.flume.sources</groupId>
+  <artifactId>watchdir</artifactId>
   <version>1.0.0</version>
   <packaging>jar</packaging>
 
@@ -24,6 +24,7 @@
     	<groupId>org.apache.flume</groupId>
     	<artifactId>flume-ng-core</artifactId>
     	<version>1.5.2</version>
+    	<scope>provided</scope>
     </dependency>
     <dependency>
         <groupId>io.dropwizard.metrics</groupId>
@@ -47,7 +48,11 @@
             <version>1.9.5</version>
             <scope>test</scope>
         </dependency>
-    
+	<dependency>
+		<groupId>stax</groupId>
+		<artifactId>stax</artifactId>
+		<version>1.2.0</version>
+	</dependency>    
   </dependencies>
   <build>
   <plugins>
@@ -59,7 +64,21 @@
           <source>1.7</source>
           <target>1.7</target>
         </configuration>
-      </plugin>      
+      </plugin>  
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+          
     </plugins>
   </build>
 </project>

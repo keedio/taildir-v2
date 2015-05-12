@@ -1,5 +1,0 @@
-org/keedio/watchdir/metrics/MetricsControllerTest.class
-org/keedio/watchdir/SerializeFilesThreadTest.class
-org/keedio/watchdir/WatchDirTest.class
-org/keedio/watchdir/WatchDirRegexTest.class
-org/keedio/watchdir/FileEventSourceListenerTest.class

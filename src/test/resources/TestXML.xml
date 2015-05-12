@@ -1,0 +1,26 @@
+	<book>
+      <author>Gambardella, Matthew</author>
+      <title>book1</title>
+      <genre>Computer</genre>
+      <price>44.95</price>
+      <publish_date>2000-10-01</publish_date>
+      <description>An in-depth look at creating applications 
+      with XML.</description>
+   </book><book><author>Gambardella, Matthew</author><title>book 
+   
+   
+   
+   
+   
+   2</title>
+      <genre>Computer</genre>
+      <price>44.95</price>
+      <publish_date>2000-10-01</publish_date>
+      <description>An in-depth look at creating applications 
+      with XML.</description>
+   </book><book><author>Gambardella, Matthew</author>
+      <title>book3</title>
+      <genre>Computer</genre>
+      <price>44.95</price>
+      <publish_date>2000-10-01</publish_date>
+</book>
