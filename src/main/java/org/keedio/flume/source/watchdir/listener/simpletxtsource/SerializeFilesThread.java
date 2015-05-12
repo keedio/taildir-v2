@@ -7,11 +7,17 @@ import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.keedio.flume.source.watchdir.listener.xmlsource.WatchDirXMLWinEventSourceListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class SerializeFilesThread implements Runnable {
 
 	private FileEventSourceListener listener;
 	private String path;
 	private int seconds;
+	private static final Logger LOGGER = LoggerFactory
+			.getLogger(SerializeFilesThread.class);
 	
 	public SerializeFilesThread(FileEventSourceListener listener, String path, int seconds) {
 		this.listener = listener;
@@ -28,7 +34,7 @@ public class SerializeFilesThread implements Runnable {
 				Thread.sleep(seconds * 1000);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOGGER.debug("Error en la lectura del fichero, todavía no se ha generado."); 
 		}
 		
 	}

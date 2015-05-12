@@ -40,6 +40,10 @@ public class WatchDirObserver implements Runnable {
 	private final Map<WatchKey, Path> keys;
 	private WatchDirFileSet set;
 	
+	public synchronized List<WatchDirListener> getListeners() {
+		return listeners;
+	}
+	
     public WatchDirObserver(WatchDirFileSet set) {
     	this.set = set;
     	keys = new HashMap<WatchKey, Path>();
@@ -68,7 +72,7 @@ public class WatchDirObserver implements Runnable {
     }
     
     protected void update(WatchDirEvent event) {
-    	for (WatchDirListener listener:listeners) {
+    	for (WatchDirListener listener:getListeners()) {
     		try{
         		listener.process(event);
     		} catch (WatchDirException e) {

@@ -90,6 +90,11 @@ public class FileEventHelper {
 			return;
 		}
 		
+		if (lastByte < 0) {
+			LOGGER.error("Se esta intentando procesar un fichero procedente del rotado");
+			return;
+		}
+		
 		lReader.skip(lastByte);
 		
 		try {

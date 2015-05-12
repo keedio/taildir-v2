@@ -83,7 +83,8 @@ public class WatchDirXMLWinEventSourceListener2Test {
 		context.put("blacklist", "");
 		context.put("whitelist", "");
 		context.put("readonstartup", "true");
-		context.put("suffix", ".completed");
+		context.put("pathtoser", testFolder.getRoot() + "/test.ser");
+		context.put("timetoser", "5");
 
 		Configurables.configure(listener, context);
 		Configurables.configure(channel, context);
@@ -106,7 +107,6 @@ public class WatchDirXMLWinEventSourceListener2Test {
 		
 	
 	@Test
-	@Ignore
 	public void testExistingFiles() throws Exception {
 		
 			// Registramos el FakeListener en todos los monitores
@@ -118,8 +118,7 @@ public class WatchDirXMLWinEventSourceListener2Test {
 			            
             // Los ficheros .finished han tenido que ser generados.
             thrown.expectMessage(containsString("already exists in the test folder"));
-            testFolder.newFile("tmp1/test.xml.completed").exists();
-            testFolder.newFile("tmp1/test2.xml.completed").exists();
+            testFolder.newFile("test.ser").exists();
 
 
 	}

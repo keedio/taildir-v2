@@ -83,6 +83,7 @@ public class FileEventSourceListener extends AbstractSource implements
 	protected int bufferSize = 1024;
 	protected String suffix;
 	protected Map<String, Long> filesObserved;
+	private SerializeFilesThread ser;
 	
 	public synchronized MetricsController getMetricsController() {
 		return metricsController;
@@ -113,7 +114,7 @@ public class FileEventSourceListener extends AbstractSource implements
 		readOnStartUp = context.getBoolean(READ_ON_STARTUP)==null?false:context.getBoolean(READ_ON_STARTUP);
 		
 		// Lanzamos el proceso de serializacion
-		SerializeFilesThread ser = new SerializeFilesThread(this, pathToSerialize, timeToSer);
+		ser = new SerializeFilesThread(this, pathToSerialize, timeToSer);
 		try {
 			filesObserved = ser.getMapFromSerFile();
 		} catch (Exception e) {
@@ -246,6 +247,18 @@ public class FileEventSourceListener extends AbstractSource implements
 					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath());
 				}
 				getFilesObserved().remove(path.toString());
+				break;
+			case "ENTRY_RENAME_TO":
+				// El fichero renombrado viene del rotado. No se vuelve a procesar
+				getFilesObserved().put(event.getPath(), -1L);
+				
+				try {
+					ser.fromMapToSerFile();
+				} catch (Exception e) {
+					LOGGER.error("Error al serializar el map");
+					throw new WatchDirException("No se pudo serializar");
+				}
+				
 				break;
 			default:
 				LOGGER.info("El evento " + event.getPath() + " no se trata.");

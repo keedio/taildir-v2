@@ -119,7 +119,7 @@ public class WatchDirXMLWinEventSourceListenerTest {
         	FileUtils.copyFile(new File("src/test/resources/nested.xml"), testFolder.newFile("tmp1/nested.xml"));
 
             Thread.sleep(20000);
-            verify(mock, times(1)).process(any(WatchDirEvent.class));
+            verify(mock, times(2)).process(any(WatchDirEvent.class));
 
 
         } catch (Exception e) {

@@ -8,11 +8,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class SerializeFilesThread implements Runnable {
 
 	private WatchDirXMLWinEventSourceListener listener;
 	private String path;
 	private int seconds;
+	private static final Logger LOGGER = LoggerFactory
+			.getLogger(SerializeFilesThread.class);
 	
 	public SerializeFilesThread(WatchDirXMLWinEventSourceListener listener, String path, int seconds) {
 		this.listener = listener;
@@ -29,7 +34,7 @@ public class SerializeFilesThread implements Runnable {
 				Thread.sleep(seconds * 1000);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOGGER.debug("Error en la lectura de fichero, todavía no se ha generado.");
 		}
 		
 	}
