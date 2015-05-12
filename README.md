@@ -1,5 +1,6 @@
 #flume-taildir-v2-source
 Source of Flume NG for tailing files in a directory. This source is based on flume-taildirectory and XMLWinEvent version. The two sources have been packaged in a single jar extracting commons features.
+
 Features:
 * The java native watch service was replaced by jpathwatch. Now events on file renames are triggered
 * Whitelist and blacklist for including/excluding files to monitor
