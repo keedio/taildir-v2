@@ -44,11 +44,6 @@ Edit flume configuration file with the parameters above.
 |readonstartup|false|Used in order to indicate if the agent have to proccess files existing in the directory on startup|
 |pathtoser|true|The .ser file used by the recovery mecanism|
 |timetoser|true|Time to generate ser file used by the recovery mecanism|
-|followlinks|false|Follow symbolic links to directories referenced in monitorized directories
-|fileHeader|false|Include file absolute path in events header
-|fileHeaderKey||Key of file absolute path header
-|basenameHeader|false|Include file base name in events header
-|basenameHeaderKey||Key of file base name header
 
 ##Configuration for single line events files
 | Property Name | Default | Description |
@@ -66,6 +61,11 @@ Edit flume configuration file with the parameters above.
 |readonstartup|false|Used in order to indicate if the agent have to proccess files existing in the directory on startup|
 |pathtoser|true|The .ser file used by the recovery mecanism|
 |timetoser|true|Time to generate ser file used by the recovery mecanism|
+|followlinks|false|Follow symbolic links to directories referenced in monitorized directories
+|fileHeader|false|Include file absolute path in events header
+|fileHeaderKey||Key of file absolute path header
+|basenameHeader|false|Include file base name in events header
+|basenameHeaderKey||Key of file base name header
 
 * Example
 ```
