@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
+
 /**
  * 
  * Implementation of a source of flume that consumes XML files that follow 
@@ -71,7 +72,13 @@ public class FileEventSourceListener extends AbstractSource implements
 	private static final String READ_ON_STARTUP = "readonstartup";
 	private static final String PATH_TO_SER = "pathtoser";	
 	private static final String TIME_TO_SER = "timetoser";	
+	private static final String FOLLOW_LINKS = "followlinks";	
+	private static final String FILE_HEADER = "fileHeader";	
+	private static final String FILE_HEADER_NAME = "fileHeaderKey";	
+	private static final String BASE_HEADER = "basenameHeader";	
+	private static final String BASE_HEADER_NAME = "basenameHeaderKey";	
 	private static final Logger LOGGER = LoggerFactory
+			
 			.getLogger(FileEventSourceListener.class);
 	private ExecutorService executor;
 	private Set<WatchDirObserver> monitor; 
@@ -84,6 +91,11 @@ public class FileEventSourceListener extends AbstractSource implements
 	protected String suffix;
 	protected Map<String, Long> filesObserved;
 	private SerializeFilesThread ser;
+	private boolean followLinks;
+	protected boolean fileHeader;
+	protected String fileHeaderName;
+	protected boolean baseHeader;
+	protected String baseHeaderName;
 	
 	public synchronized MetricsController getMetricsController() {
 		return metricsController;
@@ -112,6 +124,11 @@ public class FileEventSourceListener extends AbstractSource implements
 		String pathToSerialize = context.getString(PATH_TO_SER);
 		int timeToSer = context.getInteger(TIME_TO_SER);
 		readOnStartUp = context.getBoolean(READ_ON_STARTUP)==null?false:context.getBoolean(READ_ON_STARTUP);
+		followLinks = context.getBoolean(FOLLOW_LINKS)==null?false:context.getBoolean(FOLLOW_LINKS);
+		fileHeader = context.getBoolean(FILE_HEADER)==null?false:context.getBoolean(FILE_HEADER);
+		fileHeaderName = context.getString(FILE_HEADER_NAME);
+		baseHeader = context.getBoolean(BASE_HEADER)==null?false:context.getBoolean(BASE_HEADER);
+		baseHeaderName = context.getString(BASE_HEADER_NAME);
 		
 		// Lanzamos el proceso de serializacion
 		ser = new SerializeFilesThread(this, pathToSerialize, timeToSer);
@@ -128,7 +145,7 @@ public class FileEventSourceListener extends AbstractSource implements
 		Iterator it = getCriterias.keySet().iterator();
 		while (it.hasNext()) {
 			Map<String, String> aux = (Map<String, String>)getCriterias.get(it.next());
-			WatchDirFileSet auxSet = new WatchDirFileSet(aux.get(DIR), globalWhiteList!=null?globalWhiteList:aux.get(WHITELIST), globalBlackList!=null?globalBlackList:aux.get(BLACKLIST), readOnStartUp);
+			WatchDirFileSet auxSet = new WatchDirFileSet(aux.get(DIR), globalWhiteList!=null?globalWhiteList:aux.get(WHITELIST), globalBlackList!=null?globalBlackList:aux.get(BLACKLIST), readOnStartUp, followLinks);
 			
 			fileSets.add(auxSet);
 		}
