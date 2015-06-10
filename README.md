@@ -70,7 +70,7 @@ Edit flume configuration file with the parameters above.
 * Example
 ```
 # Describe/configure the source
-ag1.sources.r1.type = org.keedio.watchdir.listener.FileEventSourceListener
+ag1.sources.r1.type = org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventSourceListener
 ag1.sources.r1.dirs.1.dir = /tmp/dir1
 ag1.sources.r1.dirs.1.blacklist =
 ag1.sources.r1.dirs.1.whitelist =

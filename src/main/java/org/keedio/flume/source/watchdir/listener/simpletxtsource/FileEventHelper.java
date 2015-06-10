@@ -108,9 +108,9 @@ public class FileEventHelper {
 				// Put header props
 				Map<String,String> headers = new HashMap<String, String>();
 				if (listener.fileHeader)
-					headers.put(listener.fileHeaderName, new File(event.getPath()).getName());
+					headers.put(listener.fileHeaderName, event.getPath());
 				if (listener.baseHeader)
-					headers.put(listener.baseHeaderName, event.getPath());
+					headers.put(listener.baseHeaderName, new File(event.getPath()).getName());
 				if (!headers.isEmpty())
 					ev.setHeaders(headers);				
 				
