@@ -2,11 +2,13 @@ package org.keedio.flume.source.watchdir;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -35,14 +37,18 @@ public class WatchDirFileSet {
 	private String blacklist;
 	private Set<String> existingFiles;
 	private boolean readOnStartup;
+	private boolean followLinks;
+
 
 	public WatchDirFileSet(String path,
-			String whitelist, String blacklist, boolean readOnStartup) {
+			String whitelist, String blacklist, boolean readOnStartup, boolean followLinks) {
 		super();
 		this.path = path==null?"":path;
 		this.whitelist = whitelist==null?"":whitelist;
 		this.blacklist = blacklist==null?"":blacklist;
 		this.readOnStartup = readOnStartup;
+		this.followLinks = followLinks;
+
 		try {
 			existingFiles = new HashSet<String>();
 			getFiles(path);
@@ -79,6 +85,9 @@ public class WatchDirFileSet {
 	}
 	public void setReadOnStartup(boolean readOnStartup) {
 		this.readOnStartup = readOnStartup;
+	}
+	public boolean isFollowLinks() {
+		return followLinks;
 	}
 	/**
 	 * Given a file, checks if the file is in the whitelist, so have to proccess or in the blacklist
@@ -127,8 +136,16 @@ public class WatchDirFileSet {
 	
 	private void getFiles(String path) throws IOException {
 		
+    	EnumSet<FileVisitOption> opts;
+		
+		if (isFollowLinks())
+			opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
+		else
+			opts = EnumSet.noneOf(FileVisitOption.class);
+
+		
 		Path start = FileSystems.getDefault().getPath(path);
-		Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
+		Files.walkFileTree(start, opts, Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
 			@Override
 			public FileVisitResult visitFile(Path file,
 					BasicFileAttributes attrs) throws IOException {

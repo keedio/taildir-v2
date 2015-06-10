@@ -16,6 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
@@ -102,6 +104,16 @@ public class FileEventHelper {
 			String line;
 			while ((line = lReader.readLine())!=null) {
 				Event ev = EventBuilder.withBody(line.getBytes());
+				
+				// Put header props
+				Map<String,String> headers = new HashMap<String, String>();
+				if (listener.fileHeader)
+					headers.put(listener.fileHeaderName, new File(event.getPath()).getName());
+				if (listener.baseHeader)
+					headers.put(listener.baseHeaderName, event.getPath());
+				if (!headers.isEmpty())
+					ev.setHeaders(headers);				
+				
 	    		// Calls to getChannelProccesor are synchronyzed
 	    		listener.getChannelProcessor().processEvent(ev);
 	            lines ++;
