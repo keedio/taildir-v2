@@ -70,6 +70,7 @@ public class WatchDirXMLWinEventSourceListener extends AbstractSource implements
 	private static final String SUFFIX = "suffix";
 	private static final String PATH_TO_SER = "pathtoser";	
 	private static final String TIME_TO_SER = "timetoser";	
+	private static final String FOLLOW_LINKS = "followlinks";	
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(WatchDirXMLWinEventSourceListener.class);
 	private ExecutorService executor;
@@ -81,6 +82,7 @@ public class WatchDirXMLWinEventSourceListener extends AbstractSource implements
 	protected int bufferSize = 1024;
 	protected Map<String, Properties> dirProps;
 	protected Set<String> filesObserved;
+	private boolean followLinks;
 	
 	public synchronized MetricsController getMetricsController() {
 		return metricsController;
@@ -108,6 +110,7 @@ public class WatchDirXMLWinEventSourceListener extends AbstractSource implements
 		maxWorkers = context.getString(MAX_WORKERS)==null?10:Integer.parseInt(context.getString(MAX_WORKERS));
 		bufferSize = context.getString(BUFFER_SIZE)==null?1024:Integer.parseInt(context.getString(BUFFER_SIZE));
 		readOnStartUp = context.getBoolean(READ_ON_STARTUP)==null?false:context.getBoolean(READ_ON_STARTUP);
+		followLinks = context.getBoolean(FOLLOW_LINKS)==null?false:context.getBoolean(FOLLOW_LINKS);
 		dirProps = new HashMap<String, Properties>();
 		String pathToSerialize = context.getString(PATH_TO_SER);
 		int timeToSer = context.getInteger(TIME_TO_SER);
@@ -127,7 +130,8 @@ public class WatchDirXMLWinEventSourceListener extends AbstractSource implements
 		while (it.hasNext()) {
 			Properties props = new Properties();
 			Map<String, String> aux = (Map<String, String>)getCriterias.get(it.next());
-			WatchDirFileSet auxSet = new WatchDirFileSet(aux.get(DIR), globalWhiteList!=null?globalWhiteList:aux.get(WHITELIST), globalBlackList!=null?globalBlackList:aux.get(BLACKLIST), readOnStartUp);
+			WatchDirFileSet auxSet = new WatchDirFileSet(aux.get(DIR), globalWhiteList!=null?globalWhiteList:aux.get(WHITELIST), globalBlackList!=null?globalBlackList:aux.get(BLACKLIST), readOnStartUp, 
+					followLinks);
 			props.put("tagName", aux.get(TAGNAME));
 			props.put("tagLevel", aux.get(TAGLEVEL));
 			

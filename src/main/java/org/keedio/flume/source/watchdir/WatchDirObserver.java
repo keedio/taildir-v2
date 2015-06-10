@@ -1,15 +1,18 @@
 package org.keedio.flume.source.watchdir;
 
 import java.io.IOException;
+import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import name.pachler.nio.file.FileSystems;
 import name.pachler.nio.file.Path;
 import name.pachler.nio.file.Paths;
@@ -18,8 +21,10 @@ import name.pachler.nio.file.WatchEvent;
 import name.pachler.nio.file.WatchKey;
 import name.pachler.nio.file.WatchService;
 import name.pachler.nio.file.ext.ExtendedWatchEventKind;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 
 /**
@@ -93,8 +98,16 @@ public class WatchDirObserver implements Runnable {
      */
 	
     private void registerAll(final java.nio.file.Path start) throws IOException {
-        // register directory and sub-directories
-        java.nio.file.Files.walkFileTree(start, new SimpleFileVisitor<java.nio.file.Path>() {
+		
+    	EnumSet<FileVisitOption> opts;
+		
+		if (set.isFollowLinks())
+			opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
+		else
+			opts = EnumSet.noneOf(FileVisitOption.class);
+    	
+    	// register directory and sub-directories
+        java.nio.file.Files.walkFileTree(start, opts, Integer.MAX_VALUE, new SimpleFileVisitor<java.nio.file.Path>() {
             @Override
             public FileVisitResult preVisitDirectory(java.nio.file.Path dir, BasicFileAttributes attrs)
                 throws IOException {
