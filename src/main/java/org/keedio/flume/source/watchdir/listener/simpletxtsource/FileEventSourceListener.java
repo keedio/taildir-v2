@@ -18,6 +18,7 @@
  ****************************************************************/
 package org.keedio.flume.source.watchdir.listener.simpletxtsource;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -227,10 +228,9 @@ public class FileEventSourceListener extends AbstractSource implements
 		
 			case "ENTRY_CREATE":
 				try {
-					path = Paths.get(new URI("file://" + event.getPath()));
-				} catch (URISyntaxException e) {
-					LOGGER.error("Error al abrir el fichero");
-					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath());
+					path = Paths.get(new File(event.getPath()).toURI());
+				} catch (Exception e) {
+					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(),e);
 				}
 				//Comprobamos si el innodo exixtia, en cuyo caso se ha movido el fichero
 				if (getFilesObserved().containsKey(path.toString())) break;
@@ -248,20 +248,18 @@ public class FileEventSourceListener extends AbstractSource implements
 			case "ENTRY_DELETE":
 				LOGGER.debug("Se ha eliminado el fichero de eventos: " + event.getPath());
 				try {
-					path = Paths.get(new URI("file://" + event.getPath()));
-				} catch (URISyntaxException e) {
-					LOGGER.error("Error al abrir el fichero");
-					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath());
+					path = Paths.get(new File(event.getPath()).toURI());
+				} catch (Exception e) {
+					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(),e);
 				}
 				getFilesObserved().remove(path.toString());
 				break;
 			case "ENTRY_RENAME_FROM":
 				LOGGER.debug("Se ha renombrado el fichero " + event.getPath() + ". Se elimina del Map");
 				try {
-					path = Paths.get(new URI("file://" + event.getPath()));
-				} catch (URISyntaxException e) {
-					LOGGER.error("Error al abrir el fichero");
-					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath());
+					path = Paths.get(new File(event.getPath()).toURI());
+				} catch (Exception e) {
+					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(),e);
 				}
 				getFilesObserved().remove(path.toString());
 				break;
@@ -273,7 +271,7 @@ public class FileEventSourceListener extends AbstractSource implements
 					ser.fromMapToSerFile();
 				} catch (Exception e) {
 					LOGGER.error("Error al serializar el map");
-					throw new WatchDirException("No se pudo serializar");
+					throw new WatchDirException("No se pudo serializar",e);
 				}
 				
 				break;
