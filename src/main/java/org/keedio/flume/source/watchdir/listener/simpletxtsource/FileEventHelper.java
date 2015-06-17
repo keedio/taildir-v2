@@ -121,14 +121,15 @@ public class FileEventHelper {
 	    		// Notificamos un evento de nuevo mensaje
 	    		listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.NEW_EVENT));
 	    		
-	    		// Actualizamos el número de eventos leidos
-	    		listener.getFilesObserved().put(path, new Long(getBytesSize(path)));
 			}
 		} catch (IOException e) {
 			LOGGER.error("Error al procesar el fichero: " + event.getPath(), e);
 			throw e;
 		} finally {
 			lReader.close();
+
+			// Actualizamos el número de eventos leidos
+    		listener.getFilesObserved().put(path, new Long(getBytesSize(path)));
 		}
 	}
 
@@ -145,15 +146,13 @@ public class FileEventHelper {
 	    return cnt;
 	}
 	
-	public long getBytesSize(String filename) throws Exception
+	public long getBytesSize(String filename)
 	{
-        InputStream stream = null;
-        try {
-            URL url = new URL("file://" + filename);
-            stream = url.openStream();
-            return stream.available();
-        } finally {
-            stream.close();
-        }
+        File url = null;
+
+        url = new File(filename);
+            
+        return url.length();
+
     }	
 }

@@ -48,7 +48,7 @@ import org.keedio.flume.source.watchdir.metrics.MetricsEvent;
 import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import java.io.File;
 import com.google.common.base.Preconditions;
 
 
@@ -230,7 +230,11 @@ public class FileEventSourceListener extends AbstractSource implements
 				try {
 					path = Paths.get(new File(event.getPath()).toURI());
 				} catch (Exception e) {
+<<<<<<< HEAD
 					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(),e);
+=======
+					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(), e);
+>>>>>>> hotfix/2.1.4
 				}
 				//Comprobamos si el innodo exixtia, en cuyo caso se ha movido el fichero
 				if (getFilesObserved().containsKey(path.toString())) break;
@@ -250,7 +254,11 @@ public class FileEventSourceListener extends AbstractSource implements
 				try {
 					path = Paths.get(new File(event.getPath()).toURI());
 				} catch (Exception e) {
+<<<<<<< HEAD
 					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(),e);
+=======
+					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(), e);
+>>>>>>> hotfix/2.1.4
 				}
 				getFilesObserved().remove(path.toString());
 				break;
@@ -259,7 +267,11 @@ public class FileEventSourceListener extends AbstractSource implements
 				try {
 					path = Paths.get(new File(event.getPath()).toURI());
 				} catch (Exception e) {
+<<<<<<< HEAD
 					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(),e);
+=======
+					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(), e);
+>>>>>>> hotfix/2.1.4
 				}
 				getFilesObserved().remove(path.toString());
 				break;
