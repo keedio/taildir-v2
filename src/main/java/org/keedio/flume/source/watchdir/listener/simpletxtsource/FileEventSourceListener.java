@@ -47,7 +47,7 @@ import org.keedio.flume.source.watchdir.metrics.MetricsEvent;
 import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import java.io.File;
 import com.google.common.base.Preconditions;
 
 
@@ -227,10 +227,9 @@ public class FileEventSourceListener extends AbstractSource implements
 		
 			case "ENTRY_CREATE":
 				try {
-					path = Paths.get(new URI("file://" + event.getPath()));
-				} catch (URISyntaxException e) {
-					LOGGER.error("Error al abrir el fichero");
-					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath());
+					path = Paths.get(new File(event.getPath()).toURI());
+				} catch (Exception e) {
+					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(), e);
 				}
 				//Comprobamos si el innodo exixtia, en cuyo caso se ha movido el fichero
 				if (getFilesObserved().containsKey(path.toString())) break;
@@ -248,20 +247,18 @@ public class FileEventSourceListener extends AbstractSource implements
 			case "ENTRY_DELETE":
 				LOGGER.debug("Se ha eliminado el fichero de eventos: " + event.getPath());
 				try {
-					path = Paths.get(new URI("file://" + event.getPath()));
-				} catch (URISyntaxException e) {
-					LOGGER.error("Error al abrir el fichero");
-					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath());
+					path = Paths.get(new File(event.getPath()).toURI());
+				} catch (Exception e) {
+					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(), e);
 				}
 				getFilesObserved().remove(path.toString());
 				break;
 			case "ENTRY_RENAME_FROM":
 				LOGGER.debug("Se ha renombrado el fichero " + event.getPath() + ". Se elimina del Map");
 				try {
-					path = Paths.get(new URI("file://" + event.getPath()));
-				} catch (URISyntaxException e) {
-					LOGGER.error("Error al abrir el fichero");
-					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath());
+					path = Paths.get(new File(event.getPath()).toURI());
+				} catch (Exception e) {
+					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(), e);
 				}
 				getFilesObserved().remove(path.toString());
 				break;
