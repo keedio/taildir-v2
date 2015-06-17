@@ -230,11 +230,7 @@ public class FileEventSourceListener extends AbstractSource implements
 				try {
 					path = Paths.get(new File(event.getPath()).toURI());
 				} catch (Exception e) {
-<<<<<<< HEAD
-					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(),e);
-=======
 					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(), e);
->>>>>>> hotfix/2.1.4
 				}
 				//Comprobamos si el innodo exixtia, en cuyo caso se ha movido el fichero
 				if (getFilesObserved().containsKey(path.toString())) break;
@@ -254,11 +250,7 @@ public class FileEventSourceListener extends AbstractSource implements
 				try {
 					path = Paths.get(new File(event.getPath()).toURI());
 				} catch (Exception e) {
-<<<<<<< HEAD
-					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(),e);
-=======
 					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(), e);
->>>>>>> hotfix/2.1.4
 				}
 				getFilesObserved().remove(path.toString());
 				break;
@@ -267,11 +259,7 @@ public class FileEventSourceListener extends AbstractSource implements
 				try {
 					path = Paths.get(new File(event.getPath()).toURI());
 				} catch (Exception e) {
-<<<<<<< HEAD
-					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(),e);
-=======
 					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(), e);
->>>>>>> hotfix/2.1.4
 				}
 				getFilesObserved().remove(path.toString());
 				break;
@@ -296,5 +284,4 @@ public class FileEventSourceListener extends AbstractSource implements
 	public synchronized Map<String, Long> getFilesObserved() {
 		return filesObserved;
 	}
-	
-}
+}	
