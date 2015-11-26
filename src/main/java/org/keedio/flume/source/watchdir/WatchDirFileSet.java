@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Thos class include characteristics of the file to be monitorized:
+ * This class include characteristics of the file to be monitorized:
  * Path, path of the directory 
  * Tag name, name of tag expected to be in the xml files
  * Tag level, level of tag expected to be in the xml files
@@ -89,11 +89,14 @@ public class WatchDirFileSet {
 	public boolean isFollowLinks() {
 		return followLinks;
 	}
+
 	/**
 	 * Given a file, checks if the file is in the whitelist, so have to proccess or in the blacklist
-	 * so have to discard
-	 * @param file
-	 * @return
+	 * so have to discard.
+	 *
+	 * @param file input file.
+	 * @return true if the given files has not been processed.
+	 *
 	 */
 	public boolean haveToProccess(String file){
 		// Los ficheros que finalizan con el sufijo (.finished por defecto) no se tratan

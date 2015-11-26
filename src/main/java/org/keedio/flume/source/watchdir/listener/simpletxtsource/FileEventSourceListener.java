@@ -57,7 +57,7 @@ import com.google.common.base.Preconditions;
  * Implementation of a source of flume that consumes XML files that follow 
  * the standard architecture for monitoring events microsoft (WMI standard). 
  * <p>
- * The different events of the created file (block <Event> </ Event>) are extracted and 
+ * The different events of the created file (Event tag block) are extracted and
  * sent to the corresponding channel.
  *
  */
