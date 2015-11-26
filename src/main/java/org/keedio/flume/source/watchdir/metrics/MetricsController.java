@@ -59,9 +59,7 @@ public class MetricsController extends MonitoredCounterGroup implements MetricsM
 	 * <p>
 	 * For new metrics will need to create the corresponding event type in 
 	 * MetricsEvent class and then define their behavior here
-	 * @param  event	event to manage
-	 * @return      
-	 * @see        
+	 * @param  event event to manage.
 	 */
 	public void manage(MetricsEvent event) {
 		switch (event.getCode()) {
