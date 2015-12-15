@@ -33,6 +33,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javaxt.io.Directory;
 import org.apache.flume.Context;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
@@ -77,9 +78,9 @@ public class FileEventSourceListener extends AbstractSource implements
 	private static final String FILE_HEADER = "fileHeader";	
 	private static final String FILE_HEADER_NAME = "fileHeaderKey";	
 	private static final String BASE_HEADER = "basenameHeader";	
-	private static final String BASE_HEADER_NAME = "basenameHeaderKey";	
+	private static final String BASE_HEADER_NAME = "basenameHeaderKey";
+	private static final String TIME_TO_PROCESS_EVENTS = "timetoprocessevents";
 	private static final Logger LOGGER = LoggerFactory
-			
 			.getLogger(FileEventSourceListener.class);
 	private ExecutorService executor;
 	private Set<WatchDirObserver> monitor; 
@@ -97,6 +98,7 @@ public class FileEventSourceListener extends AbstractSource implements
 	protected String fileHeaderName;
 	protected boolean baseHeader;
 	protected String baseHeaderName;
+	private int timeToProcessEvents;
 	
 	public synchronized MetricsController getMetricsController() {
 		return metricsController;
@@ -129,6 +131,7 @@ public class FileEventSourceListener extends AbstractSource implements
 		fileHeader = context.getBoolean(FILE_HEADER)==null?false:context.getBoolean(FILE_HEADER);
 		fileHeaderName = context.getString(FILE_HEADER_NAME);
 		baseHeader = context.getBoolean(BASE_HEADER)==null?false:context.getBoolean(BASE_HEADER);
+		timeToProcessEvents = context.getInteger(TIME_TO_PROCESS_EVENTS)==null?10:context.getInteger(TIME_TO_PROCESS_EVENTS);
 		baseHeaderName = context.getString(BASE_HEADER_NAME);
 		
 		// Lanzamos el proceso de serializacion
@@ -191,7 +194,7 @@ public class FileEventSourceListener extends AbstractSource implements
 			Iterator<WatchDirFileSet> it = fileSets.iterator();
 			
 			while(it.hasNext()) {
-				WatchDirObserver aux = new WatchDirObserver(it.next());
+				WatchDirObserver aux = new WatchDirObserver(it.next(), timeToProcessEvents);
 				aux.addWatchDirListener(this);
 
 				Log.debug("Lanzamos el proceso");
@@ -218,7 +221,7 @@ public class FileEventSourceListener extends AbstractSource implements
 	}
 	
 	@Override
-	public void process(WatchDirEvent event) throws WatchDirException {
+	public void  process(WatchDirEvent event) throws WatchDirException {
 
 		FileEventHelper helper = new FileEventHelper(this, event);
 		Path path = null;
@@ -226,7 +229,7 @@ public class FileEventSourceListener extends AbstractSource implements
 		// Si no esta instanciado el source informamos
 		switch(event.getType()) {
 		
-			case "ENTRY_CREATE":
+			case Directory.Event.CREATE:
 				try {
 					path = Paths.get(new File(event.getPath()).toURI());
 				} catch (Exception e) {
@@ -238,14 +241,14 @@ public class FileEventSourceListener extends AbstractSource implements
 				// Notificamos nuevo fichero creado
 				metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
 				getFilesObserved().put(path.toString(), 0L);
-				LOGGER.debug("Seha creado el fichero de eventos: " + event.getPath());
+				LOGGER.debug("Se ha creado el fichero de eventos: " + event.getPath());
 				helper.launchEvents();
 				break;
-			case "ENTRY_MODIFY":
+			case Directory.Event.MODIFY:
 				LOGGER.debug("Procesando eventos del fichero: " + event.getPath());
 				helper.launchEvents();
 				break;
-			case "ENTRY_DELETE":
+			case Directory.Event.DELETE:
 				LOGGER.debug("Se ha eliminado el fichero de eventos: " + event.getPath());
 				try {
 					path = Paths.get(new File(event.getPath()).toURI());
@@ -254,16 +257,15 @@ public class FileEventSourceListener extends AbstractSource implements
 				}
 				getFilesObserved().remove(path.toString());
 				break;
-			case "ENTRY_RENAME_FROM":
-				LOGGER.debug("Se ha renombrado el fichero " + event.getPath() + ". Se elimina del Map");
+			case Directory.Event.RENAME:
+				LOGGER.debug("Se ha renombrado el fichero " + event.getOldPath() + ". Se elimina del Map");
 				try {
-					path = Paths.get(new File(event.getPath()).toURI());
+					path = Paths.get(new File(event.getOldPath()).toURI());
 				} catch (Exception e) {
 					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(), e);
 				}
 				getFilesObserved().remove(path.toString());
-				break;
-			case "ENTRY_RENAME_TO":
+
 				// El fichero renombrado viene del rotado. No se vuelve a procesar
 				getFilesObserved().put(event.getPath(), -1L);
 				
@@ -275,6 +277,7 @@ public class FileEventSourceListener extends AbstractSource implements
 				}
 				
 				break;
+
 			default:
 				LOGGER.info("El evento " + event.getPath() + " no se trata.");
 				break;

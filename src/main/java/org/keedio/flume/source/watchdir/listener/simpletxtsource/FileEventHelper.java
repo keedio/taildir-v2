@@ -15,9 +15,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
@@ -102,6 +100,7 @@ public class FileEventHelper {
 		try {
 			int lines = 0;
 			String line;
+			List<Event> events = new ArrayList<Event>();
 			while ((line = lReader.readLine())!=null) {
 				Event ev = EventBuilder.withBody(line.getBytes());
 				
@@ -115,13 +114,16 @@ public class FileEventHelper {
 					ev.setHeaders(headers);				
 				
 	    		// Calls to getChannelProccesor are synchronyzed
-	    		listener.getChannelProcessor().processEvent(ev);
+				events.add(ev);
 	            lines ++;
 	            
 	    		// Notificamos un evento de nuevo mensaje
 	    		listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.NEW_EVENT));
 	    		
 			}
+
+			listener.getChannelProcessor().processEventBatch(events);
+
 		} catch (IOException e) {
 			LOGGER.error("Error al procesar el fichero: " + event.getPath(), e);
 			throw e;

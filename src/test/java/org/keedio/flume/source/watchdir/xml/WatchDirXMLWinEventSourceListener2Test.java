@@ -42,6 +42,7 @@ public class WatchDirXMLWinEventSourceListener2Test {
 
 	
 	WatchDirXMLWinEventSourceListener listener;
+	Channel channel;
 	File tstFolder1;
 	File tstFolder2;
 	File tstFolder3;
@@ -54,9 +55,8 @@ public class WatchDirXMLWinEventSourceListener2Test {
 
 	@Rule
     public ExpectedException thrown= ExpectedException.none();
-	
-	@Before
-	public void setUp() throws IOException{
+
+	public void setUp() throws Exception{
         tstFolder1 = testFolder.newFolder("/tmp1/");
         tstFolder2 = testFolder.newFolder("/tmp2/");
         tstFolder3 = testFolder.newFolder("/tmp3/");
@@ -85,6 +85,7 @@ public class WatchDirXMLWinEventSourceListener2Test {
 		context.put("readonstartup", "true");
 		context.put("pathtoser", testFolder.getRoot() + "/test.ser");
 		context.put("timetoser", "5");
+		context.put("timetoprocessevents", "-1");
 
 		Configurables.configure(listener, context);
 		Configurables.configure(channel, context);
@@ -97,18 +98,20 @@ public class WatchDirXMLWinEventSourceListener2Test {
 		listener.configure(context);
 		
 		listener.start();;
-		
+		Thread.sleep(2000);
 	}
-	
-	@After
-	public void finish() {
+
+	public void finish() throws Exception {
+		channel.stop();
 		listener.stop();
+		Thread.sleep(2000);
 	}
 		
 	
 	@Test
 	public void testExistingFiles() throws Exception {
-		
+
+			setUp();
 			// Registramos el FakeListener en todos los monitores
 			for (WatchDirObserver observer: listener.getMonitor()) {
 				observer.addWatchDirListener(mock);
@@ -118,8 +121,8 @@ public class WatchDirXMLWinEventSourceListener2Test {
 			            
             // Los ficheros .finished han tenido que ser generados.
             thrown.expectMessage(containsString("already exists in the test folder"));
-            testFolder.newFile("test.ser").exists();
-
+		testFolder.newFile("test.ser").exists();
+			finish();
 
 	}
 
