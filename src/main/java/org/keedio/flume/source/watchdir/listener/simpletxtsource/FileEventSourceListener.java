@@ -38,14 +38,10 @@ import org.apache.flume.Context;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.source.AbstractSource;
-import org.keedio.flume.source.watchdir.FileUtil;
-import org.keedio.flume.source.watchdir.WatchDirEvent;
-import org.keedio.flume.source.watchdir.WatchDirException;
-import org.keedio.flume.source.watchdir.WatchDirFileSet;
-import org.keedio.flume.source.watchdir.WatchDirListener;
-import org.keedio.flume.source.watchdir.WatchDirObserver;
+import org.keedio.flume.source.watchdir.*;
 import org.keedio.flume.source.watchdir.metrics.MetricsController;
 import org.keedio.flume.source.watchdir.metrics.MetricsEvent;
+import org.keedio.flume.source.watchdir.util.Util;
 import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,7 +87,7 @@ public class FileEventSourceListener extends AbstractSource implements
 	private int maxWorkers = 10;
 	protected int bufferSize = 1024;
 	protected String suffix;
-	protected Map<String, Long> filesObserved;
+	protected Map<String, InodeInfo> filesObserved;
 	private SerializeFilesThread ser;
 	private boolean followLinks;
 	protected boolean fileHeader;
@@ -139,10 +135,10 @@ public class FileEventSourceListener extends AbstractSource implements
 		try {
 			filesObserved = ser.getMapFromSerFile();
 		} catch (Exception e) {
-			filesObserved = new HashMap<String, Long>();
+			filesObserved = new HashMap<String, InodeInfo>();
 		}
 		new Thread(ser).start();
-
+		new Thread(new EventProcessingThread(this, timeToProcessEvents)).start();
 		
 		// Creamos los filesets
 		fileSets = new HashSet<WatchDirFileSet>();
@@ -187,6 +183,9 @@ public class FileEventSourceListener extends AbstractSource implements
 	@Override
 	public void start() {
 		LOGGER.info("Source Starting..");
+
+
+
 		executor = Executors.newFixedThreadPool(maxWorkers);
 		monitor = new HashSet<WatchDirObserver>();
 		
@@ -221,70 +220,50 @@ public class FileEventSourceListener extends AbstractSource implements
 	}
 	
 	@Override
-	public void  process(WatchDirEvent event) throws WatchDirException {
+	public synchronized void  process(WatchDirEvent event) throws WatchDirException {
 
-		FileEventHelper helper = new FileEventHelper(this, event);
 		Path path = null;
-		
+		Path oldPath = null;
+		String inode = Util.getInodeID(event.getPath());
+
 		// Si no esta instanciado el source informamos
+
 		switch(event.getType()) {
 		
-			case Directory.Event.CREATE:
-				try {
-					path = Paths.get(new File(event.getPath()).toURI());
-				} catch (Exception e) {
-					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(), e);
-				}
-				//Comprobamos si el innodo exixtia, en cuyo caso se ha movido el fichero
-				if (getFilesObserved().containsKey(path.toString())) break;
+			case "ENTRY_CREATE":
+				//Comprobamos si el inodo no existia, en cuyo caso se crea. Si ya existia viene de una renombrado.
+				if (!getFilesObserved().containsKey(Util.getInodeID(event.getPath()))) {
+					if (event.getSet().haveToProccess(event.getPath())) {
+						InodeInfo info = new InodeInfo(0L, event.getPath());
+						getFilesObserved().put(inode, info);
+						metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
 
+						LOGGER.debug("Se ha creado el fichero de eventos: " + event.getPath());
+					}
+				} else {
+					// Viene de rotado. Cambiamos el nombre del fichero
+					InodeInfo old = getFilesObserved().get(inode);
+					old.setFileName(event.getPath());
+					old.setProcess(true);
+					// y se marca para que no se vuelva a gestionar
+					getFilesObserved().put(inode, old);
+				}
 				// Notificamos nuevo fichero creado
-				metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
-				getFilesObserved().put(path.toString(), 0L);
-				LOGGER.debug("Se ha creado el fichero de eventos: " + event.getPath());
-				helper.launchEvents();
 				break;
-			case Directory.Event.MODIFY:
-				LOGGER.debug("Procesando eventos del fichero: " + event.getPath());
-				helper.launchEvents();
-				break;
-			case Directory.Event.DELETE:
-				LOGGER.debug("Se ha eliminado el fichero de eventos: " + event.getPath());
-				try {
-					path = Paths.get(new File(event.getPath()).toURI());
-				} catch (Exception e) {
-					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(), e);
+			case "ENTRY_MODIFY":
+				InodeInfo old = getFilesObserved().get(inode);
+				if (!old.isProcess()) {
+					old.setProcess(true);
+					getFilesObserved().put(inode, old);
 				}
-				getFilesObserved().remove(path.toString());
 				break;
-			case Directory.Event.RENAME:
-				LOGGER.debug("Se ha renombrado el fichero " + event.getOldPath() + ". Se elimina del Map");
-				try {
-					path = Paths.get(new File(event.getOldPath()).toURI());
-				} catch (Exception e) {
-					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(), e);
-				}
-				getFilesObserved().remove(path.toString());
-
-				// El fichero renombrado viene del rotado. No se vuelve a procesar
-				getFilesObserved().put(event.getPath(), -1L);
-				
-				try {
-					ser.fromMapToSerFile();
-				} catch (Exception e) {
-					LOGGER.error("Error al serializar el map");
-					throw new WatchDirException("No se pudo serializar",e);
-				}
-				
-				break;
-
 			default:
 				LOGGER.info("El evento " + event.getPath() + " no se trata.");
 				break;
 		}
 	}
 
-	public synchronized Map<String, Long> getFilesObserved() {
+	public synchronized Map<String, InodeInfo> getFilesObserved() {
 		return filesObserved;
 	}
 	

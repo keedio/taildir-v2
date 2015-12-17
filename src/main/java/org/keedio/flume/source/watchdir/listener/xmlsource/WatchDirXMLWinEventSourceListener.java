@@ -212,7 +212,7 @@ public class WatchDirXMLWinEventSourceListener extends AbstractSource implements
 		// Si no esta instanciado el source informamos
 		switch(event.getType()) {
 		
-			case Directory.Event.CREATE:
+			case "ENTRY_CREATE":
 				// Comprobamos si el fichero ya fue procesado anteriormente
 				if (getFilesObserved().contains(event.getPath())) break;
 				

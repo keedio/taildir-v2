@@ -7,23 +7,21 @@ package org.keedio.flume.source.watchdir;
  */
 public class WatchDirEvent {
 
-	private int type;
+	private String type;
 	private String path;
 	private WatchDirFileSet set;
-	private String oldPath;
-	
-	public WatchDirEvent(String path, String oldPath, int type, WatchDirFileSet set) {
+
+	public WatchDirEvent(String path, String type, WatchDirFileSet set) {
 		this.type = type;
 		this.path = path;
 		this.set = set;
-		this.oldPath = oldPath;
 	}
 	
-	public int getType() {
+	public String getType() {
 		return type;
 	}
 
-	public void setType(int type) {
+	public void setType(String type) {
 		this.type = type;
 	}
 
@@ -43,11 +41,4 @@ public class WatchDirEvent {
 		this.set = set;
 	}
 
-	public String getOldPath() {
-		return oldPath;
-	}
-
-	public void setOldPath(String oldPath) {
-		this.oldPath = oldPath;
-	}
 }
