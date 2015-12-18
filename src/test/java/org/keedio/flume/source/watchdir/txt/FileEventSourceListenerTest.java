@@ -20,12 +20,7 @@ import org.apache.flume.channel.MemoryChannel;
 import org.apache.flume.channel.ReplicatingChannelSelector;
 import org.apache.flume.conf.Configurables;
 import org.hamcrest.Matcher;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.keedio.flume.source.watchdir.WatchDirEvent;
@@ -46,6 +41,8 @@ public class FileEventSourceListenerTest {
 
 	
 	FileEventSourceListener listener;
+	Channel channel;
+
 	File tstFolder1;
 	File tstFolder2;
 	File tstFolder3;
@@ -58,16 +55,15 @@ public class FileEventSourceListenerTest {
 
 	@Rule
     public ExpectedException thrown= ExpectedException.none();
-	
-	@Before
-	public void setUp() throws IOException{
+
+	public void setUp() throws Exception{
         tstFolder1 = testFolder.newFolder("/tmp1/");
         tstFolder2 = testFolder.newFolder("/tmp2/");
         tstFolder3 = testFolder.newFolder("/tmp3/");
 		
 		listener = new FileEventSourceListener();
 		
-		Channel channel = new MemoryChannel();
+		channel = new MemoryChannel();
 		Context context = new Context();
 		context.put("dirs.1.dir", tstFolder1.getAbsolutePath());
 		context.put("dirs.2.dir", tstFolder2.getAbsolutePath());
@@ -75,10 +71,11 @@ public class FileEventSourceListenerTest {
 		context.put("keep-alive", "1");
 		context.put("capacity", "100000");
 		context.put("transactionCapacity", "100000");
-		context.put("blacklist", "");
+		context.put("blacklist", "\\.dat");
 		context.put("whitelist", "");
 		context.put("pathtoser", testFolder.getRoot() + "/test.ser");
 		context.put("timetoser", "5");
+		context.put("timetoprocessevents", "-1");
 
 		Configurables.configure(listener, context);
 		Configurables.configure(channel, context);
@@ -91,24 +88,24 @@ public class FileEventSourceListenerTest {
 		listener.configure(context);
 		
 		listener.start();;
+		Thread.sleep(2000);
 		
 	}
-	
-	@After
-	public void finish() {
+
+	public void finish() throws Exception{
 		listener.stop();
+		channel.stop();
+		testFolder.delete();
+		Thread.sleep(2000);
 	}
 	
 	@Test
-	public void testOnGoing() {
-		System.out.println();
-		Assert.assertTrue("El hilo esta corriendo", "START".equals(listener.getLifecycleState().toString()));
-	}
-	
-	@Test
-	public void testFileModified() {
-		
+	public void testFileModified() throws Exception {
+
+
 		try {
+			setUp();
+
 			// Registramos el FakeListener en todos los monitores
 			for (WatchDirObserver observer: listener.getMonitor()) {
 				observer.addWatchDirListener(mock);
@@ -132,9 +129,10 @@ public class FileEventSourceListenerTest {
         	col.add("Evento 28");
         	col.add("Evento 29");
         	FileUtils.writeLines(FileUtils.getFile(testFolder.getRoot() + "/tmp1/test2.txt"), col, true);
-            Thread.sleep(20000);
-            verify(mock, atLeast(2)).process(any(WatchDirEvent.class));
+            Thread.sleep(10000);
+            verify(mock, atLeast(1)).process(any(WatchDirEvent.class));
 
+			finish();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -147,10 +145,11 @@ public class FileEventSourceListenerTest {
 	}
 	
 	@Test
-	@Ignore
 	public void testFileModifiedNotObserved() {
 		
 		try {
+			setUp();
+
 			// Registramos el FakeListener en todos los monitores
 			for (WatchDirObserver observer: listener.getMonitor()) {
 				observer.addWatchDirListener(mock);
@@ -158,12 +157,13 @@ public class FileEventSourceListenerTest {
 			
 
             // Creamos el fichero en el directorio 1
-        	FileUtils.copyFile(new File("test/resources/test2.txt"), testFolder.newFile("tmp3/test2.txt"));
+        	FileUtils.copyFile(new File("src/test/resources/test2.txt"), testFolder.newFile("tmp3/test2.dat"));
 
-            Thread.sleep(20000);
+            Thread.sleep(10000);
             verify(mock, times(0)).process(any(WatchDirEvent.class));
             Assert.assertFalse("No se ha creado el fichero", new File("tmp3/test.xml.finished").exists());
 
+			finish();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -176,9 +176,10 @@ public class FileEventSourceListenerTest {
 	}
 
 	@Test
-	@Ignore
 	public void testFileModifiedTwoDirectories() throws Exception {
-		
+
+			setUp();
+
 			// Registramos el FakeListener en todos los monitores
 			for (WatchDirObserver observer: listener.getMonitor()) {
 				observer.addWatchDirListener(mock);
@@ -186,45 +187,18 @@ public class FileEventSourceListenerTest {
 			
 
             // Creamos el fichero en el directorio 1
-        	FileUtils.copyFile(new File("test/resources/test2.txt"), testFolder.newFile("tmp1/test2.txt"));
-        	FileUtils.copyFile(new File("test/resources/test2.txt"), testFolder.newFile("tmp2/test2.txt"));
-        	FileUtils.copyFile(new File("test/resources/test2.txt"), testFolder.newFile("tmp3/test2.txt"));
+        	FileUtils.copyFile(new File("src/test/resources/test2.txt"), testFolder.newFile("tmp1/test2.txt"));
+        	FileUtils.copyFile(new File("src/test/resources/test2.txt"), testFolder.newFile("tmp2/test2.txt"));
+        	FileUtils.copyFile(new File("src/test/resources/test2.txt"), testFolder.newFile("tmp3/test2.txt"));
 
-            Thread.sleep(20000);
+            Thread.sleep(10000);
             verify(mock, times(2)).process(any(WatchDirEvent.class));
-            
-            // Los ficheros .finished han tenido que ser generados.
-            thrown.expectMessage(containsString("already exists in the test folder"));
-            testFolder.newFile("tmp1/test.xml.finished").exists();
-            testFolder.newFile("tmp2/test.xml.finished").exists();
 
+			finish();
 
 	}
-	
-	@Test
-	@Ignore
-	public void testExistingFiles() throws Exception {
-		
-			// Creamos el fichero en el directorio 1
-    		FileUtils.copyFile(new File("test/resources/test2.txt"), testFolder.newFile("tmp1/test.txt"));
-    		FileUtils.copyFile(new File("test/resources/test2.txt"), testFolder.newFile("tmp1/test2.txt"));
-    		FileUtils.copyFile(new File("test/resources/test2.txt"), testFolder.newFile("tmp3/test.txt"));
-
-			// Registramos el FakeListener en todos los monitores
-			for (WatchDirObserver observer: listener.getMonitor()) {
-				observer.addWatchDirListener(mock);
-			}
-			
-            Thread.sleep(20000);
-            verify(mock, times(2)).process(any(WatchDirEvent.class));
-            
-            // Los ficheros .finished han tenido que ser generados.
-            thrown.expectMessage(containsString("already exists in the test folder"));
-            testFolder.newFile("tmp1/test.xml.finished").exists();
-            testFolder.newFile("tmp1/test2.xml.finished").exists();
 
 
-	}
 
 
 }

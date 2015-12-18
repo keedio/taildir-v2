@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javaxt.io.Directory;
 import org.apache.flume.Context;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
@@ -70,7 +71,7 @@ public class WatchDirXMLWinEventSourceListener extends AbstractSource implements
 	private static final String SUFFIX = "suffix";
 	private static final String PATH_TO_SER = "pathtoser";	
 	private static final String TIME_TO_SER = "timetoser";	
-	private static final String FOLLOW_LINKS = "followlinks";	
+	private static final String FOLLOW_LINKS = "followlinks";
 	private static final Logger LOGGER = LoggerFactory
 			.getLogger(WatchDirXMLWinEventSourceListener.class);
 	private ExecutorService executor;
@@ -179,7 +180,7 @@ public class WatchDirXMLWinEventSourceListener extends AbstractSource implements
 			Iterator<WatchDirFileSet> it = fileSets.iterator();
 			
 			while(it.hasNext()) {
-				WatchDirObserver aux = new WatchDirObserver(it.next());
+				WatchDirObserver aux = new WatchDirObserver(it.next(), -1);
 				aux.addWatchDirListener(this);
 
 				Log.debug("Lanzamos el proceso");
