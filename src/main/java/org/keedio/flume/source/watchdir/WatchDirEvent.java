@@ -10,7 +10,7 @@ public class WatchDirEvent {
 	private String type;
 	private String path;
 	private WatchDirFileSet set;
-	
+
 	public WatchDirEvent(String path, String type, WatchDirFileSet set) {
 		this.type = type;
 		this.path = path;
@@ -40,5 +40,5 @@ public class WatchDirEvent {
 	public void setSet(WatchDirFileSet set) {
 		this.set = set;
 	}
-	
+
 }
