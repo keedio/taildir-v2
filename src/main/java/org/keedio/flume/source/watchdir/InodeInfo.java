@@ -1,9 +1,11 @@
 package org.keedio.flume.source.watchdir;
 
+import java.io.Serializable;
+
 /**
  * Created by rolmo on 17/12/15.
  */
-public class InodeInfo {
+public class InodeInfo implements Serializable {
 
     private String fileName;
     private Long position;

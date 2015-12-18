@@ -117,7 +117,7 @@ public class WatchDirXMLWinEventSourceListenerTest {
             // Creamos el fichero en el directorio 1
         	FileUtils.copyFile(new File("src/test/resources/nested.xml"), testFolder.newFile("tmp1/nested.xml"));
 
-            Thread.sleep(2000);
+            Thread.sleep(10000);
 			verify(mock, times(1)).process(any(WatchDirEvent.class));
 
 			finish();

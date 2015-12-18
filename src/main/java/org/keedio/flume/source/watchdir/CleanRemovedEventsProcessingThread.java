@@ -4,14 +4,16 @@ import org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventHelper
 import org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventSourceListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
 import java.util.Map;
 
-public class EventProcessingThread implements Runnable {
+public class CleanRemovedEventsProcessingThread implements Runnable {
 
 	private FileEventSourceListener listener;
 	private int seconds;
 	private static final Logger LOGGER = LoggerFactory
-			.getLogger(EventProcessingThread.class);
+			.getLogger(CleanRemovedEventsProcessingThread.class);
 
 	public int getProcessedEvents() {
 		return processedEvents;
@@ -19,7 +21,7 @@ public class EventProcessingThread implements Runnable {
 
 	private int processedEvents = 0;
 
-	public EventProcessingThread(FileEventSourceListener listener, int seconds) {
+	public CleanRemovedEventsProcessingThread(FileEventSourceListener listener, int seconds) {
 		this.listener = listener;
 		this.seconds = seconds;
 	}
@@ -45,14 +47,9 @@ public class EventProcessingThread implements Runnable {
 
     		try{
 				InodeInfo inode = inodes.get(inodeKey);
-				if (inode.isProcess()) {
-					FileEventHelper helper = new FileEventHelper(listener, inode.getFileName(), inode.getPosition());
-					Long offset = helper.launchEvents();
-
-					// Acualizamos la posicion
-					inode.setPosition(offset);
-					inode.setProcess(false);
-					listener.getFilesObserved().put(inodeKey, inode);
+				File file = new File(inode.getFileName());
+				if (!file.exists()) {
+					listener.getFilesObserved().remove(inodeKey);
 				}
     		} catch (Exception e) {
     			LOGGER.info("Error procesando el listener", e);

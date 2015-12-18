@@ -129,7 +129,7 @@ public class FileEventSourceListenerTest {
         	col.add("Evento 28");
         	col.add("Evento 29");
         	FileUtils.writeLines(FileUtils.getFile(testFolder.getRoot() + "/tmp1/test2.txt"), col, true);
-            Thread.sleep(2000);
+            Thread.sleep(10000);
             verify(mock, atLeast(1)).process(any(WatchDirEvent.class));
 
 			finish();
@@ -159,7 +159,7 @@ public class FileEventSourceListenerTest {
             // Creamos el fichero en el directorio 1
         	FileUtils.copyFile(new File("src/test/resources/test2.txt"), testFolder.newFile("tmp3/test2.dat"));
 
-            Thread.sleep(2000);
+            Thread.sleep(10000);
             verify(mock, times(0)).process(any(WatchDirEvent.class));
             Assert.assertFalse("No se ha creado el fichero", new File("tmp3/test.xml.finished").exists());
 
@@ -191,7 +191,7 @@ public class FileEventSourceListenerTest {
         	FileUtils.copyFile(new File("src/test/resources/test2.txt"), testFolder.newFile("tmp2/test2.txt"));
         	FileUtils.copyFile(new File("src/test/resources/test2.txt"), testFolder.newFile("tmp3/test2.txt"));
 
-            Thread.sleep(5000);
+            Thread.sleep(10000);
             verify(mock, times(2)).process(any(WatchDirEvent.class));
 
 			finish();

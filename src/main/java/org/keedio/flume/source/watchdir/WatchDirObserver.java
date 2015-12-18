@@ -5,11 +5,8 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javaxt.io.Directory;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,58 +82,6 @@ public class WatchDirObserver implements Runnable {
     	}
     }
 
-
-	/*
-    @Override
-	public void run() {
-
-    	if (listeners.isEmpty()) {
-    		LOGGER.error("No existen listeners. Finalizando");
-    	} else {
-    		try {
-    			boolean fin = false;
-    			
-    			// En primer lugar procesamos todos los ficheros pre-existentes
-    			if (set.isReadOnStartup()) {
-        			for(String file:set.getExistingFiles()) {
-        				WatchDirEvent event = new WatchDirEvent(file, null, Directory.Event.CREATE, set);
-						updateImmediately(event);
-        				LOGGER.debug("Fichero existente anteriormente:" + file + " .Se procesa");
-        			}
-    			}
-
-				javaxt.io.Directory directory = new javaxt.io.Directory(set.getPath());
-				java.util.List events = directory.getEvents();
-
-
-				while (true){
-
-					javaxt.io.Directory.Event event;
-					synchronized (events) {
-						while (events.isEmpty()) {
-							try {
-								events.wait();
-							}
-							catch (InterruptedException e) {
-							  e.printStackTrace();
-							}
-						}
-						event = (javaxt.io.Directory.Event)events.remove(0);
-						generatedEvents++;
-					}
-
-					if (event!=null){
-						LOGGER.debug(event.toString());
-            			updateImmediately(new WatchDirEvent(event.getFile(), event.getOriginalFile(), event.getEventID(), set));
-					}
-				}
-    		} catch (Exception e) {
-    			LOGGER.info(e.getMessage(), e);
-    		}
-    	}
-	}
-	*/
-
 	static <T> WatchEvent<T> castEvent(WatchEvent<?> event) {
 		return (WatchEvent<T>)event;
 	}
@@ -208,6 +153,8 @@ public class WatchDirObserver implements Runnable {
 					for(String file:set.getExistingFiles()) {
 						WatchDirEvent event = new WatchDirEvent(file, "ENTRY_CREATE", set);
 						updateImmediately(event);
+						WatchDirEvent eventToModify = new WatchDirEvent(file, "ENTRY_MODIFY", set);
+						updateImmediately(eventToModify);
 						LOGGER.debug("Fichero existente anteriormente:" + file + " .Se procesa");
 					}
 				}
@@ -244,7 +191,7 @@ public class WatchDirObserver implements Runnable {
 								//}
 							}
 
-						} catch (IOException x) {
+						} catch (Exception x) {
 							LOGGER.error(x.getMessage(), x);
 						}
 					}
@@ -258,38 +205,9 @@ public class WatchDirObserver implements Runnable {
 							break;
 						}
 					}
-				}
-
-/*
-				while (!fin) {
-					// wait for key to be signaled
-					WatchKey key;
-					key = watcherSvc.take();
-					Path dir = keys.get(key);
-
-					for (WatchEvent<?> event : key.pollEvents()) {
-						WatchEvent<Path> ev = cast(event);
-						Path name = ev.context();
-						Path path = dir.resolve(name);
-
-						// Si se crea un nuevo directorio es necesario registrarlo de nuevo
-						if (java.nio.file.Files.isDirectory(java.nio.file.Paths.get(path.toString()), LinkOption.NOFOLLOW_LINKS))
-							registerAll(java.nio.file.Paths.get(path.toString()));
-						else {
-							//if (set.haveToProccess(path.toString())) {
-								updateImmediately(new WatchDirEvent(path.toString(), event.kind().name(), set));
-							//}
-						}
-
-					}
-
-					// reset key and remove from set if directory no longer
-					// accessible
-					key.reset();
-
 					Thread.sleep(1000);
+
 				}
-*/
 			} catch (InterruptedException e) {
 				LOGGER.info(e.getMessage(), e);
 			} catch (Exception e) {

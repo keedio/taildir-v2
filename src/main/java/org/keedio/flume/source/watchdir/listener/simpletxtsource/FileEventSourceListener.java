@@ -138,8 +138,9 @@ public class FileEventSourceListener extends AbstractSource implements
 			filesObserved = new HashMap<String, InodeInfo>();
 		}
 		new Thread(ser).start();
+		new Thread(new CleanRemovedEventsProcessingThread(this, timeToProcessEvents)).start();
 		new Thread(new EventProcessingThread(this, timeToProcessEvents)).start();
-		
+
 		// Creamos los filesets
 		fileSets = new HashSet<WatchDirFileSet>();
 		Iterator it = getCriterias.keySet().iterator();
@@ -251,6 +252,7 @@ public class FileEventSourceListener extends AbstractSource implements
 				// Notificamos nuevo fichero creado
 				break;
 			case "ENTRY_MODIFY":
+				if (!event.getSet().haveToProccess(event.getPath())) break;
 				InodeInfo old = getFilesObserved().get(inode);
 				if (!old.isProcess()) {
 					old.setProcess(true);
