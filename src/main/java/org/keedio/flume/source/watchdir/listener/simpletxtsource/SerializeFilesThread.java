@@ -5,9 +5,7 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.keedio.flume.source.watchdir.listener.xmlsource.WatchDirXMLWinEventSourceListener;
+import org.keedio.flume.source.watchdir.InodeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,12 +37,12 @@ public class SerializeFilesThread implements Runnable {
 		
 	}
 	
-	public Map<String, Long> getMapFromSerFile() throws Exception {
-		Map<String, Long> map = null;
+	public Map<String, InodeInfo> getMapFromSerFile() throws Exception {
+		Map<String, InodeInfo> map = null;
 		
 		FileInputStream fis = new FileInputStream(path);
 		ObjectInputStream ois = new ObjectInputStream(fis);
-		map = (Map<String, Long>) ois.readObject();
+		map = (Map<String, InodeInfo>) ois.readObject();
 			
 		return map;
 			

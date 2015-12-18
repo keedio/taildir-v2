@@ -1,31 +1,14 @@
 package org.keedio.flume.source.watchdir;
 
+
 import java.io.IOException;
-import java.nio.file.FileVisitOption;
-import java.nio.file.FileVisitResult;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import name.pachler.nio.file.FileSystems;
-import name.pachler.nio.file.Path;
-import name.pachler.nio.file.Paths;
-import name.pachler.nio.file.StandardWatchEventKind;
-import name.pachler.nio.file.WatchEvent;
-import name.pachler.nio.file.WatchKey;
-import name.pachler.nio.file.WatchService;
-import name.pachler.nio.file.ext.ExtendedWatchEventKind;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 
 /**
  * 
@@ -44,30 +27,43 @@ public class WatchDirObserver implements Runnable {
 			.getLogger(WatchDirObserver.class);
 	private final Map<WatchKey, Path> keys;
 	private WatchDirFileSet set;
-	
+	private List<WatchDirEvent> eventsToProcceed;
+	// El acceso a eventsToProceed tiene que ser concurrente
+	//public static Semaphore semaforo = new Semaphore(1);
+	private int timeToProccessEvents;
+
+	public int getGeneratedEvents() {
+		return generatedEvents;
+	}
+
+	private int generatedEvents = 0;
+
+	public List<WatchDirEvent> getEventsToProcceed() {
+		return eventsToProcceed;
+	}
+
+
 	public synchronized List<WatchDirListener> getListeners() {
 		return listeners;
 	}
 	
-    public WatchDirObserver(WatchDirFileSet set) {
+    public WatchDirObserver(WatchDirFileSet set, int timeToProccessEvents) {
     	this.set = set;
     	keys = new HashMap<WatchKey, Path>();
     	listeners = new ArrayList<WatchDirListener>();
-    	
+		eventsToProcceed = new ArrayList<WatchDirEvent>();
+		this.timeToProccessEvents = timeToProccessEvents;
+
 		try {
 			Path directotyToWatch = Paths.get(set.getPath());
-	        watcherSvc = FileSystems.getDefault().newWatchService();
-	        registerAll(java.nio.file.Paths.get(directotyToWatch.toString()));
+			watcherSvc = FileSystems.getDefault().newWatchService();
+			registerAll(java.nio.file.Paths.get(directotyToWatch.toString()));
 
 		} catch (IOException e){
 			LOGGER.info("No se puede monitorizar el directorio: " + set.getPath(), e);
 		}
     }
 
-    static <T> WatchEvent<T> castEvent(WatchEvent<?> event) {
-        return (WatchEvent<T>)event;
-    }
-    
     /**
      * Method used to record listeners. There must be at least one.
      * @param listener	Must implement WhatchDirListerner. See listeners implementations for more information
@@ -75,8 +71,8 @@ public class WatchDirObserver implements Runnable {
     public void addWatchDirListener(WatchDirListener listener) {
     	listeners.add(listener);
     }
-    
-    protected void update(WatchDirEvent event) {
+
+    protected void updateImmediately(WatchDirEvent event) {
     	for (WatchDirListener listener:getListeners()) {
     		try{
         		listener.process(event);
@@ -86,49 +82,47 @@ public class WatchDirObserver implements Runnable {
     	}
     }
 
+	static <T> WatchEvent<T> castEvent(WatchEvent<?> event) {
+		return (WatchEvent<T>)event;
+	}
+
 	@SuppressWarnings("unchecked")
 	static <T> WatchEvent<T> cast(WatchEvent<?> event) {
 		return (WatchEvent<T>) event;
 	}
 
-    /**
-     * Register the given directory, and all its sub-directories, with the WatchService.
-     * @param  start	The initial path to monitor. 
-     * 
-     */
-	
-    private void registerAll(final java.nio.file.Path start) throws IOException {
-		
-    	EnumSet<FileVisitOption> opts;
-		
+	private void registerAll(final java.nio.file.Path start) throws IOException {
+
+		EnumSet<FileVisitOption> opts;
+
 		if (set.isFollowLinks())
 			opts = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
 		else
 			opts = EnumSet.noneOf(FileVisitOption.class);
-    	
-    	// register directory and sub-directories
-        java.nio.file.Files.walkFileTree(start, opts, Integer.MAX_VALUE, new SimpleFileVisitor<java.nio.file.Path>() {
-            @Override
-            public FileVisitResult preVisitDirectory(java.nio.file.Path dir, BasicFileAttributes attrs)
-                throws IOException {
-                    register(Paths.get(dir.toString()));
-                    return FileVisitResult.CONTINUE;
-            }
-        });
-    }    
-    
+
+		// register directory and sub-directories
+		Files.walkFileTree(start, opts, Integer.MAX_VALUE, new SimpleFileVisitor<java.nio.file.Path>() {
+			@Override
+			public FileVisitResult preVisitDirectory(java.nio.file.Path dir, BasicFileAttributes attrs)
+					throws IOException {
+				register(Paths.get(dir.toString()));
+				return FileVisitResult.CONTINUE;
+			}
+		});
+	}
+
 	private void register(Path dir) throws IOException {
 
 		LOGGER.trace("WatchDir: register");
-		
+
 		// Solo nos preocupamos por los ficheros de nueva creacion
-		
+
 		WatchKey key = null;
 		try {
-			key = dir.register(watcherSvc, StandardWatchEventKind.ENTRY_CREATE, StandardWatchEventKind.ENTRY_MODIFY, StandardWatchEventKind.ENTRY_DELETE, ExtendedWatchEventKind.ENTRY_RENAME_FROM, ExtendedWatchEventKind.ENTRY_RENAME_TO);
+			key = dir.register(watcherSvc, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
 		} catch (UnsupportedOperationException e) {
 			LOGGER.debug("Eventos no soportados. Registramos solo CREATE, DELETED, MODIFY");
-			key = dir.register(watcherSvc, StandardWatchEventKind.ENTRY_CREATE, StandardWatchEventKind.ENTRY_MODIFY, StandardWatchEventKind.ENTRY_DELETE);
+			key = dir.register(watcherSvc, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
 		}
 		Path prev = keys.get(key);
 
@@ -145,61 +139,83 @@ public class WatchDirObserver implements Runnable {
 
 	}
 
-    
-    @Override
+	@Override
 	public void run() {
-    	
-    	if (listeners.isEmpty()) {
-    		LOGGER.error("No existen listeners. Finalizando");
-    	} else {
-    		try {
-    			boolean fin = false;
-    			
-    			// En primer lugar procesamos todos los ficheros pre-existentes
-    			if (set.isReadOnStartup()) {
-        			for(String file:set.getExistingFiles()) {
-        				WatchDirEvent event = new WatchDirEvent(file, "ENTRY_CREATE", set);
-        				update(event);
-        				LOGGER.debug("Fichero existente anteriormente:" + file + " .Se procesa");
-        			}
-    			}
-    			
-    			while (!fin) {
-    				// wait for key to be signaled
-    				WatchKey key;
-    				key = watcherSvc.take();
-    				Path dir = keys.get(key);
 
-    				for (WatchEvent<?> event : key.pollEvents()) {
-        				WatchEvent<Path> ev = cast(event);
-    					Path name = ev.context();
-    					Path path = dir.resolve(name);
-    					
-    					// Si se crea un nuevo directorio es necesario registrarlo de nuevo
-    					if (java.nio.file.Files.isDirectory(java.nio.file.Paths.get(path.toString()), NOFOLLOW_LINKS))
-    						registerAll(java.nio.file.Paths.get(path.toString()));
-    					else {
-    						if (set.haveToProccess(path.toString())) {
-        						update(new WatchDirEvent(path.toString(), event.kind().name(), set));    							
-    						}
-    					}
-    					
-    				}
+		if (listeners.isEmpty()) {
+			LOGGER.error("No existen listeners. Finalizando");
+		} else {
+			try {
+				boolean fin = false;
 
-    				// reset key and remove from set if directory no longer
-    				// accessible
-    				key.reset();
+				// En primer lugar procesamos todos los ficheros pre-existentes
+				if (set.isReadOnStartup()) {
+					for(String file:set.getExistingFiles()) {
+						WatchDirEvent event = new WatchDirEvent(file, "ENTRY_CREATE", set);
+						updateImmediately(event);
+						WatchDirEvent eventToModify = new WatchDirEvent(file, "ENTRY_MODIFY", set);
+						updateImmediately(eventToModify);
+						LOGGER.debug("Fichero existente anteriormente:" + file + " .Se procesa");
+					}
+				}
 
-    				Thread.sleep(1000);
-    			}
-    		} catch (InterruptedException e) {
-    			LOGGER.info(e.getMessage(), e);
-    		} catch (Exception e) {
-    			LOGGER.info(e.getMessage(), e);
-    		}
-    	}
+				for (;;) {
+					// wait for key to be signaled
+					WatchKey key;
+					key = watcherSvc.take();
+					Path dir = keys.get(key);
+
+					if (dir == null) {
+						LOGGER.error("WatchKey not recognized!!");
+						continue;
+					}
+
+					for (WatchEvent<?> event : key.pollEvents()) {
+						try{
+							WatchEvent.Kind<?> kind = event.kind();
+
+							// Context for directory entry event is the file name of
+							// entry
+							WatchEvent<Path> ev = cast(event);
+							Path name = ev.context();
+							Path path = dir.resolve(name);
+
+							// print out event
+							LOGGER.trace(event.kind().name() + ": " + path);
+
+							if (java.nio.file.Files.isDirectory(java.nio.file.Paths.get(path.toString()), LinkOption.NOFOLLOW_LINKS))
+								registerAll(java.nio.file.Paths.get(path.toString()));
+							else {
+								//if (set.haveToProccess(path.toString())) {
+								updateImmediately(new WatchDirEvent(path.toString(), event.kind().name(), set));
+								//}
+							}
+
+						} catch (Exception x) {
+							LOGGER.error(x.getMessage(), x);
+						}
+					}
+					// reset key and remove from set if directory no longer
+					// accessible
+					boolean valid = key.reset();
+					if (!valid) {
+						keys.remove(key);
+						// all directories are inaccessible
+						if (keys.isEmpty()) {
+							break;
+						}
+					}
+					Thread.sleep(1000);
+
+				}
+			} catch (InterruptedException e) {
+				LOGGER.info(e.getMessage(), e);
+			} catch (Exception e) {
+				LOGGER.info(e.getMessage(), e);
+			}
+		}
 	}
-    
+
     public static boolean match(String patterns, String string) {
     	
     	String[] splitPat = patterns.split(",");
