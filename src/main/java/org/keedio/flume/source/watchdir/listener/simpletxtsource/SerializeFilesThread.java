@@ -5,10 +5,7 @@ import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.keedio.flume.source.watchdir.InodeInfo;
-import org.keedio.flume.source.watchdir.listener.xmlsource.WatchDirXMLWinEventSourceListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
