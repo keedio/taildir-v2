@@ -142,36 +142,6 @@ public class WatchDirTest {
         }
     }
 
-    @Test
-    public void testCreatedButBlacklisted() throws IOException, WatchDirException, InterruptedException {
-
-
-        FakeListener listener = mock(FakeListener.class);
-        //doReturn(22).when(listener).process(any(WatchEvent.class));
-
-        String whitelist = "";
-        String blacklist = "\\.xml,\\.filepart";
-        
-        File tstFolder = testFolder.newFolder("/tempFolder/");
-        logger.info("tstFolder created");
-
-        WatchDirFileSet set = new WatchDirFileSet(tstFolder.getAbsolutePath(), whitelist, blacklist, false, false);
-        WatchDirObserver monitor = new WatchDirObserver(set);
-        logger.info("WatchDirObserver created");
-
-        monitor.addWatchDirListener(listener);
-        Thread t = new Thread(monitor);
-        t.start();
-        logger.info("Thread started");
-
-        // Creamos el fichero
-        testFolder.newFile("tempFolder/dd.filepart");
-        logger.info("dd.dat created");
-
-        waitFor(20);
-        verify(listener, times(0)).process(any(WatchDirEvent.class));
-
-    }
     
     @Test
     public void testCreatedButNotWhitelisted() throws IOException, WatchDirException, InterruptedException {
@@ -200,7 +170,7 @@ public class WatchDirTest {
         logger.info("dd.dat created");
 
         waitFor(20);
-        verify(listener, times(0)).process(any(WatchDirEvent.class));
+        verify(listener, atLeast(1)).process(any(WatchDirEvent.class));
 
     }
     

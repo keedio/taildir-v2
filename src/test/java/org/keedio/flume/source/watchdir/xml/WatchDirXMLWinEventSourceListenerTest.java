@@ -105,32 +105,7 @@ public class WatchDirXMLWinEventSourceListenerTest {
 		Assert.assertTrue("El hilo esta corriendo", "START".equals(listener.getLifecycleState().toString()));
 	}
 	
-	@Test
-	public void testFileModified() {
-		
-		try {
-			// Registramos el FakeListener en todos los monitores
-			for (WatchDirObserver observer: listener.getMonitor()) {
-				observer.addWatchDirListener(mock);
-			}
-			
 
-            // Creamos el fichero en el directorio 1
-        	FileUtils.copyFile(new File("src/test/resources/nested.xml"), testFolder.newFile("tmp1/nested.xml"));
-
-            Thread.sleep(20000);
-            verify(mock, times(2)).process(any(WatchDirEvent.class));
-
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail();
-        } catch (Throwable e) {
-            e.printStackTrace();
-            Assert.fail();
-        }
-		
-	}
 	
 	@Test
 	public void testFileModifiedNotObserved() {

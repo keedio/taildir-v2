@@ -15,6 +15,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,8 +30,10 @@ import javax.xml.stream.events.XMLEvent;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.keedio.flume.source.watchdir.FileUtil;
+import org.keedio.flume.source.watchdir.InodeInfo;
 import org.keedio.flume.source.watchdir.WatchDirEvent;
 import org.keedio.flume.source.watchdir.metrics.MetricsEvent;
+import org.keedio.flume.source.watchdir.util.Util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,19 +49,24 @@ public class FileEventHelper {
 			.getLogger(FileEventHelper.class);
 
 	FileEventSourceListener listener;
-	WatchDirEvent event;
-	
-	public FileEventHelper(FileEventSourceListener listener, WatchDirEvent event) {
+	private ArrayList<Event> buffer;
+
+
+  public FileEventHelper(FileEventSourceListener listener) {
 		this.listener = listener;
-		this.event = event;
+		this.buffer = new ArrayList<>();
 	}
-	
-	public void launchEvents() {
+  
+  public synchronized ArrayList<Event> getBuffer() {
+    return buffer;
+  }
+  
+	public void process(WatchDirEvent event) {
 		try {
 			Date inicio = new Date();
 			int procesados = 0;
 			
-			readLines(event.getPath());
+			readLines(event);
 			
 			long intervalo = new Date().getTime() - inicio.getTime();
 
@@ -72,14 +80,21 @@ public class FileEventHelper {
 		}
 	}
 
-	private void readLines(String path) throws Exception {
+	public void commitPendings() {
+    listener.getChannelProcessor().processEventBatch(getBuffer());
+    getBuffer().clear();
+	}
+	
+	private void readLines(WatchDirEvent event) throws Exception {
 
+	  String path = event.getPath();
 		BufferedReader lReader = new BufferedReader(new FileReader(new File(path)));
+		String inode = Util.getInodeID(path);
 		
 		//
 		Long lastByte = 0L;
-		if (listener.getFilesObserved().containsKey(path))
-			lastByte = listener.getFilesObserved().get(path);
+		if (listener.getFilesObserved().containsKey(inode))
+			lastByte = listener.getFilesObserved().get(inode).getPosition();
 		else {
 			// Probablemente se ha producido algún fallo de lo que no nos podamos recuperar
 			// Ponemos el contador de eventos al final del del fichero
@@ -87,7 +102,8 @@ public class FileEventHelper {
 			lastByte = getBytesSize(path);
 			
 			// seteamos el contador
-			listener.getFilesObserved().put(path, new Long(getBytesSize(path)));
+			InodeInfo inodeInfo = new InodeInfo(lastByte, path);
+			listener.getFilesObserved().put(inode, inodeInfo);
 			
 			return;
 		}
@@ -114,36 +130,29 @@ public class FileEventHelper {
 				if (!headers.isEmpty())
 					ev.setHeaders(headers);				
 				
-	    		// Calls to getChannelProccesor are synchronyzed
-	    		listener.getChannelProcessor().processEvent(ev);
-	            lines ++;
-	            
-	    		// Notificamos un evento de nuevo mensaje
-	    		listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.NEW_EVENT));
-	    		
+				
+				getBuffer().add(ev);
+				
+				lastByte =  lastByte + line.length() + 1;
+				
+				InodeInfo inodeInfo = new InodeInfo(lastByte, path);
+				listener.getFilesObserved().put(inode, inodeInfo);
+
+	    	// Notificamos un evento de nuevo mensaje
+	    	listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.NEW_EVENT));
+	    	
+	    	if (getBuffer().size() > listener.eventsCapacity) {
+	    	  listener.getChannelProcessor().processEventBatch(getBuffer());
+	    	  getBuffer().clear();
+	    	}
+	    	
 			}
 		} catch (IOException e) {
 			LOGGER.error("Error al procesar el fichero: " + event.getPath(), e);
 			throw e;
 		} finally {
 			lReader.close();
-
-			// Actualizamos el número de eventos leidos
-    		listener.getFilesObserved().put(path, new Long(getBytesSize(path)));
 		}
-	}
-
-	public int countLines(String filename) throws IOException {
-	    LineNumberReader reader  = new LineNumberReader(new FileReader(filename));
-	
-	    int cnt = 0;
-
-	    reader.skip(Long.MAX_VALUE);
-
-	    cnt = reader.getLineNumber(); 
-	    reader.close();
-	    
-	    return cnt;
 	}
 	
 	public long getBytesSize(String filename)

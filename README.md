@@ -2,11 +2,11 @@
 Source of Flume NG for tailing files in a directory. This source is based on flume-taildirectory and XMLWinEvent version. The two sources have been packaged in a single jar extracting commons features.
 
 Features:
-* The java native watch service was replaced by jpathwatch. Now events on file renames are triggered
 * Whitelist and blacklist for including/excluding files to monitor
 * Recovery mechanism in case flume dies
 * Now, it is possible to read files on startup
 * Process both xml and single event line files.
+* It i spossible to set both number of events or max time in seconds to inject events to channel
 
 #Compilation
 ```
@@ -66,8 +66,11 @@ Edit flume configuration file with the parameters above.
 |fileHeaderKey||Key of file absolute path header
 |basenameHeader|false|Include file base name in events header
 |basenameHeaderKey||Key of file base name header
+|eventsCapacity|1000|Number of events until channel injection|
+|autocommittime|10|Number of seconds until channel injection|
 
 * Example
+
 ```
 # Describe/configure the source
 ag1.sources.r1.type = org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventSourceListener
@@ -81,4 +84,10 @@ ag1.sources.r1.blacklist = \\.\\d+
 ag1.sources.r1.whitelist =
 ag1.sources.r1.readonstartup=true
 ag1.sources.r1.pathtoser=/tmp/map.ser
-ag1.sources.r1.timetoser=5```
+ag1.sources.r1.timetoser=5
+ag1.sources.r1.eventsCapacity=10000
+ag1.sources.r1.autocommittime=10
+```
+
+## Log changes
+* Fix a bug found under high load conditions

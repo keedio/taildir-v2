@@ -1,10 +1,8 @@
 package org.keedio.flume.source.watchdir;
 
 import java.io.IOException;
-import java.nio.file.FileVisitOption;
-import java.nio.file.FileVisitResult;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.*;
+import java.nio.file.attribute.*;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -13,14 +11,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import name.pachler.nio.file.FileSystems;
-import name.pachler.nio.file.Path;
-import name.pachler.nio.file.Paths;
-import name.pachler.nio.file.StandardWatchEventKind;
-import name.pachler.nio.file.WatchEvent;
-import name.pachler.nio.file.WatchKey;
-import name.pachler.nio.file.WatchService;
-import name.pachler.nio.file.ext.ExtendedWatchEventKind;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,10 +115,10 @@ public class WatchDirObserver implements Runnable {
 		
 		WatchKey key = null;
 		try {
-			key = dir.register(watcherSvc, StandardWatchEventKind.ENTRY_CREATE, StandardWatchEventKind.ENTRY_MODIFY, StandardWatchEventKind.ENTRY_DELETE, ExtendedWatchEventKind.ENTRY_RENAME_FROM, ExtendedWatchEventKind.ENTRY_RENAME_TO);
+			key = dir.register(watcherSvc, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
 		} catch (UnsupportedOperationException e) {
 			LOGGER.debug("Eventos no soportados. Registramos solo CREATE, DELETED, MODIFY");
-			key = dir.register(watcherSvc, StandardWatchEventKind.ENTRY_CREATE, StandardWatchEventKind.ENTRY_MODIFY, StandardWatchEventKind.ENTRY_DELETE);
+			key = dir.register(watcherSvc, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
 		}
 		Path prev = keys.get(key);
 
@@ -179,9 +169,7 @@ public class WatchDirObserver implements Runnable {
     					if (java.nio.file.Files.isDirectory(java.nio.file.Paths.get(path.toString()), NOFOLLOW_LINKS))
     						registerAll(java.nio.file.Paths.get(path.toString()));
     					else {
-    						if (set.haveToProccess(path.toString())) {
-        						update(new WatchDirEvent(path.toString(), event.kind().name(), set));    							
-    						}
+        				update(new WatchDirEvent(path.toString(), event.kind().name(), set));    							
     					}
     					
     				}

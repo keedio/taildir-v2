@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.keedio.flume.source.watchdir.InodeInfo;
 import org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventSourceListener;
 import org.keedio.flume.source.watchdir.listener.simpletxtsource.SerializeFilesThread;
 import org.mockito.Mock;
@@ -19,19 +20,17 @@ public class SerializeFilesThreadTest {
 	
 	@Test
 	public void testSerializacion() throws Exception {
-		Map<String, Long> map = new HashMap<>();
-		map.put("1", 0L);
-		map.put("2", 0L);
-		map.put("3", 0L);
-		map.put("4", 0L);
+		Map<String, InodeInfo> map = new HashMap<>();
+		InodeInfo in = new InodeInfo(0L, "inode");
+		map.put("1", in);
 		
 		when(listener.getFilesObserved()).thenReturn(map);
 		
 		SerializeFilesThread ser = new SerializeFilesThread(listener, "/tmp/test.ser", 5);
 		ser.fromMapToSerFile();
-		Map<String, Long> aux = ser.getMapFromSerFile();
+		Map<String, InodeInfo> aux = ser.getMapFromSerFile();
 		
-		Assert.assertEquals(map, aux);
+		Assert.assertEquals(map.get("1").getFileName(), aux.get("1").getFileName());
 		
 	}
 	

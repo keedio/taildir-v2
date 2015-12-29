@@ -38,6 +38,7 @@ import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.source.AbstractSource;
 import org.keedio.flume.source.watchdir.FileUtil;
+import org.keedio.flume.source.watchdir.InodeInfo;
 import org.keedio.flume.source.watchdir.WatchDirEvent;
 import org.keedio.flume.source.watchdir.WatchDirException;
 import org.keedio.flume.source.watchdir.WatchDirFileSet;
@@ -45,10 +46,13 @@ import org.keedio.flume.source.watchdir.WatchDirListener;
 import org.keedio.flume.source.watchdir.WatchDirObserver;
 import org.keedio.flume.source.watchdir.metrics.MetricsController;
 import org.keedio.flume.source.watchdir.metrics.MetricsEvent;
+import org.keedio.flume.source.watchdir.util.Util;
 import org.mortbay.log.Log;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.File;
+
 import com.google.common.base.Preconditions;
 
 
@@ -78,6 +82,8 @@ public class FileEventSourceListener extends AbstractSource implements
 	private static final String FILE_HEADER_NAME = "fileHeaderKey";	
 	private static final String BASE_HEADER = "basenameHeader";	
 	private static final String BASE_HEADER_NAME = "basenameHeaderKey";	
+  private static final String EVENTS_CAPACITY = "eventsCapacity"; 
+  private static final String AUTOCOMMIT_TIME = "autocommittime"; 
 	private static final Logger LOGGER = LoggerFactory
 			
 			.getLogger(FileEventSourceListener.class);
@@ -90,15 +96,18 @@ public class FileEventSourceListener extends AbstractSource implements
 	private int maxWorkers = 10;
 	protected int bufferSize = 1024;
 	protected String suffix;
-	protected Map<String, Long> filesObserved;
+	protected Map<String, InodeInfo> filesObserved;
 	private SerializeFilesThread ser;
 	private boolean followLinks;
 	protected boolean fileHeader;
 	protected String fileHeaderName;
 	protected boolean baseHeader;
 	protected String baseHeaderName;
+	protected int eventsCapacity;
+  protected int autocommittime;
+	private FileEventHelper helper;
 	
-	public synchronized MetricsController getMetricsController() {
+  public synchronized MetricsController getMetricsController() {
 		return metricsController;
 	}
 
@@ -109,6 +118,10 @@ public class FileEventSourceListener extends AbstractSource implements
 	public void setMonitor(Set<WatchDirObserver> monitor) {
 		this.monitor = monitor;
 	}
+
+	public FileEventHelper getHelper() {
+    return helper;
+  }
 
 	@Override
 	public void configure(Context context) {
@@ -130,16 +143,16 @@ public class FileEventSourceListener extends AbstractSource implements
 		fileHeaderName = context.getString(FILE_HEADER_NAME);
 		baseHeader = context.getBoolean(BASE_HEADER)==null?false:context.getBoolean(BASE_HEADER);
 		baseHeaderName = context.getString(BASE_HEADER_NAME);
+		eventsCapacity = context.getInteger(EVENTS_CAPACITY)==null?1000:context.getInteger(EVENTS_CAPACITY);
+    autocommittime = context.getInteger(AUTOCOMMIT_TIME)==null?10000:context.getInteger(AUTOCOMMIT_TIME)*1000;
 		
 		// Lanzamos el proceso de serializacion
 		ser = new SerializeFilesThread(this, pathToSerialize, timeToSer);
 		try {
 			filesObserved = ser.getMapFromSerFile();
 		} catch (Exception e) {
-			filesObserved = new HashMap<String, Long>();
+			filesObserved = new HashMap<String, InodeInfo>();
 		}
-		new Thread(ser).start();
-
 		
 		// Creamos los filesets
 		fileSets = new HashSet<WatchDirFileSet>();
@@ -150,9 +163,13 @@ public class FileEventSourceListener extends AbstractSource implements
 			
 			fileSets.add(auxSet);
 		}
-
+		
+    helper = new FileEventHelper(this);
 		Preconditions.checkState(!fileSets.isEmpty(), "Bad configuration, review documentation on https://github.com/keedio/XMLWinEvent/blob/master/README.md");	
 
+    new Thread(ser).start();
+    new Thread(new AutocommitThread(this, autocommittime)).start();
+		
 	}
 	
 	public static Map<String, Map<String, String>> getMapProperties(Map<String, String> all) {
@@ -220,31 +237,38 @@ public class FileEventSourceListener extends AbstractSource implements
 	@Override
 	public void process(WatchDirEvent event) throws WatchDirException {
 
-		FileEventHelper helper = new FileEventHelper(this, event);
+
 		Path path = null;
+    Path oldPath = null;
+    String inode = Util.getInodeID(event.getPath());
 		
 		// Si no esta instanciado el source informamos
 		switch(event.getType()) {
 		
 			case "ENTRY_CREATE":
-				try {
-					path = Paths.get(new File(event.getPath()).toURI());
-				} catch (Exception e) {
-					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(), e);
-				}
-				//Comprobamos si el innodo exixtia, en cuyo caso se ha movido el fichero
-				if (getFilesObserved().containsKey(path.toString())) break;
+        //Comprobamos si el inodo no existia, en cuyo caso se crea. Si ya existia viene de una renombrado.
+        if (!getFilesObserved().containsKey(Util.getInodeID(event.getPath()))) {
+          if (event.getSet().haveToProccess(event.getPath())) {
+            InodeInfo info = new InodeInfo(0L, event.getPath());
+            getFilesObserved().put(inode, info);
+            metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
 
-				// Notificamos nuevo fichero creado
-				metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
-				getFilesObserved().put(path.toString(), 0L);
-				LOGGER.debug("Seha creado el fichero de eventos: " + event.getPath());
-				helper.launchEvents();
-				break;
+            LOGGER.debug("Se ha creado el fichero de eventos: " + event.getPath());
+          }
+        } else {
+          // Viene de rotado. Cambiamos el nombre del fichero
+          InodeInfo old = getFilesObserved().get(inode);
+          old.setFileName(event.getPath());
+          // y se marca para que no se vuelva a gestionar
+          getFilesObserved().put(inode, old);
+        }
+        helper.process(event);
+        // Notificamos nuevo fichero creado
+        break;
 			case "ENTRY_MODIFY":
-				LOGGER.debug("Procesando eventos del fichero: " + event.getPath());
-				helper.launchEvents();
-				break;
+        if (!event.getSet().haveToProccess(event.getPath())) break;
+        helper.process(event);
+        break;
 			case "ENTRY_DELETE":
 				LOGGER.debug("Se ha eliminado el fichero de eventos: " + event.getPath());
 				try {
@@ -252,28 +276,7 @@ public class FileEventSourceListener extends AbstractSource implements
 				} catch (Exception e) {
 					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(), e);
 				}
-				getFilesObserved().remove(path.toString());
-				break;
-			case "ENTRY_RENAME_FROM":
-				LOGGER.debug("Se ha renombrado el fichero " + event.getPath() + ". Se elimina del Map");
-				try {
-					path = Paths.get(new File(event.getPath()).toURI());
-				} catch (Exception e) {
-					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(), e);
-				}
-				getFilesObserved().remove(path.toString());
-				break;
-			case "ENTRY_RENAME_TO":
-				// El fichero renombrado viene del rotado. No se vuelve a procesar
-				getFilesObserved().put(event.getPath(), -1L);
-				
-				try {
-					ser.fromMapToSerFile();
-				} catch (Exception e) {
-					LOGGER.error("Error al serializar el map");
-					throw new WatchDirException("No se pudo serializar",e);
-				}
-				
+				getFilesObserved().remove(inode);
 				break;
 			default:
 				LOGGER.info("El evento " + event.getPath() + " no se trata.");
@@ -281,7 +284,7 @@ public class FileEventSourceListener extends AbstractSource implements
 		}
 	}
 
-	public synchronized Map<String, Long> getFilesObserved() {
+	public synchronized Map<String, InodeInfo> getFilesObserved() {
 		return filesObserved;
 	}
 }	

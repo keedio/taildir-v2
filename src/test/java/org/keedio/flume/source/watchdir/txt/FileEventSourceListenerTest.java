@@ -133,7 +133,7 @@ public class FileEventSourceListenerTest {
         	col.add("Evento 29");
         	FileUtils.writeLines(FileUtils.getFile(testFolder.getRoot() + "/tmp1/test2.txt"), col, true);
             Thread.sleep(20000);
-            verify(mock, atLeast(2)).process(any(WatchDirEvent.class));
+            verify(mock, atLeast(1)).process(any(WatchDirEvent.class));
 
 
         } catch (Exception e) {
