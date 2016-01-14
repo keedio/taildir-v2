@@ -223,7 +223,15 @@ public class FileEventSourceListener extends AbstractSource implements
 
 		Path path = null;
 		Path oldPath = null;
-		String inode = Util.getInodeID(event.getPath());
+		String inode;
+		
+		try {
+	    inode = Util.getInodeID(event.getPath());		  
+		} catch (WatchDirException e) {
+		  //En caso de borrado de ficheros no podemos obtener el inode
+		  LOGGER.warn("Could not get file props because it was removed");
+		  return;
+		}
 
 		// Si no esta instanciado el source informamos
 
@@ -266,5 +274,4 @@ public class FileEventSourceListener extends AbstractSource implements
 	public synchronized Map<String, InodeInfo> getFilesObserved() {
 		return filesObserved;
 	}
-	
-}
+}	
