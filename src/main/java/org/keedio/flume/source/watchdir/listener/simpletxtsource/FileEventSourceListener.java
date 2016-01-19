@@ -219,7 +219,7 @@ public class FileEventSourceListener extends AbstractSource implements
 	}
 	
 	@Override
-	public synchronized void  process(WatchDirEvent event) throws WatchDirException {
+	public void  process(WatchDirEvent event) throws WatchDirException {
 
 		Path path = null;
 		Path oldPath = null;
