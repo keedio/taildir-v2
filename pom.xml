@@ -4,7 +4,7 @@
 
     <groupId>org.keedio.flume.sources</groupId>
     <artifactId>flume-taildir-v2</artifactId>
-    <version>3.0.1</version>
+    <version>3.0.3-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
