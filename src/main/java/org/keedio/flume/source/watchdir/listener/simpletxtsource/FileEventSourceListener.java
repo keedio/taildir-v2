@@ -229,7 +229,7 @@ public class FileEventSourceListener extends AbstractSource implements
 	    inode = Util.getInodeID(event.getPath());		  
 		} catch (WatchDirException e) {
 		  //En caso de borrado de ficheros no podemos obtener el inode
-		  LOGGER.warn("Could not get file props because it was removed");
+		  LOGGER.warn("The file " + event.getPath() + " was wating to be processed but someone removed it. Sorry, some events could be lost!!!");
 		  return;
 		}
 
@@ -260,7 +260,15 @@ public class FileEventSourceListener extends AbstractSource implements
 			case "ENTRY_MODIFY":
 				if (!event.getSet().haveToProccess(event.getPath())) break;
 				InodeInfo old = getFilesObserved().get(inode);
-				if (!old.isProcess()) {
+				boolean haveToProcess = false;
+				try {
+				  // Se puede haber borrado el fichero en este punto.
+				  haveToProcess = old.isProcess();
+				} catch (NullPointerException e) {
+				  LOGGER.warn("The file " + event.getPath() + " was wating to be processed but someone removed it. Sorry, some events could be lost!!!");
+				  break;
+				}
+				if (!haveToProcess) {
 					old.setProcess(true);
 					getFilesObserved().put(inode, old);
 				}
