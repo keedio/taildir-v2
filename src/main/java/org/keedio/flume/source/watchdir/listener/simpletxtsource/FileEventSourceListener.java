@@ -259,10 +259,11 @@ public class FileEventSourceListener extends AbstractSource implements
           // Viene de rotado. Cambiamos el nombre del fichero
           InodeInfo old = getFilesObserved().get(inode);
           old.setFileName(event.getPath());
+          old.setPosition(0L);
           // y se marca para que no se vuelva a gestionar
           getFilesObserved().put(inode, old);
         }
-        helper.process(event);
+        //helper.process(event);
         // Notificamos nuevo fichero creado
         break;
 			case "ENTRY_MODIFY":

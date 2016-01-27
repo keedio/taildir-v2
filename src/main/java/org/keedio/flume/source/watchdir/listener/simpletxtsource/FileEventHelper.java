@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
@@ -50,11 +52,17 @@ public class FileEventHelper {
 
 	FileEventSourceListener listener;
 	private ArrayList<Event> buffer;
-
+  private String pattern;
+  private Pattern r;
+  private Matcher m;
 
   public FileEventHelper(FileEventSourceListener listener) {
 		this.listener = listener;
 		this.buffer = new ArrayList<>();
+		
+    String pattern = ".+\\{.+\\}";
+    Pattern r = Pattern.compile(pattern);
+    
 	}
   
   public synchronized ArrayList<Event> getBuffer() {
@@ -102,7 +110,7 @@ public class FileEventHelper {
 			lastByte = getBytesSize(path);
 			
 			// seteamos el contador
-			InodeInfo inodeInfo = new InodeInfo(lastByte, path);
+			InodeInfo inodeInfo = new InodeInfo(0L, path);
 			listener.getFilesObserved().put(inode, inodeInfo);
 			
 			return;
@@ -119,6 +127,16 @@ public class FileEventHelper {
 			int lines = 0;
 			String line;
 			while ((line = lReader.readLine())!=null) {
+			  // Find the gap
+
+			  m = r.matcher(line);
+			  if (m.find()) {
+			    LOGGER.debug("----------------------------------------------");
+			    LOGGER.debug("La línea viene truncada, volcamos el estado");
+			    LOGGER.debug(listener.getFilesObserved().toString());
+          LOGGER.debug("----------------------------------------------");
+			  }
+			  
 				Event ev = EventBuilder.withBody(line.getBytes());
 				
 				// Put header props
