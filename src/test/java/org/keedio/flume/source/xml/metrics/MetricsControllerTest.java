@@ -1,14 +1,17 @@
 package org.keedio.flume.source.xml.metrics;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import junit.framework.Assert;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.keedio.flume.source.watchdir.metrics.MetricsController;
 import org.keedio.flume.source.watchdir.metrics.MetricsEvent;
 
 public class MetricsControllerTest {
-
-	
+  
 	@Test
 	public void testManageTotalFiles() {
 		// Arrange

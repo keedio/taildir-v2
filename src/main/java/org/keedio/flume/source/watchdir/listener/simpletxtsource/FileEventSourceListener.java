@@ -37,6 +37,7 @@ import org.apache.flume.Context;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.source.AbstractSource;
+import org.keedio.flume.source.watchdir.CleanRemovedEventsProcessingThread;
 import org.keedio.flume.source.watchdir.FileUtil;
 import org.keedio.flume.source.watchdir.InodeInfo;
 import org.keedio.flume.source.watchdir.WatchDirEvent;
@@ -169,7 +170,8 @@ public class FileEventSourceListener extends AbstractSource implements
 
     new Thread(ser).start();
     new Thread(new AutocommitThread(this, autocommittime)).start();
-		
+    new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime)).start();
+    
 	}
 	
 	public static Map<String, Map<String, String>> getMapProperties(Map<String, String> all) {
@@ -240,12 +242,12 @@ public class FileEventSourceListener extends AbstractSource implements
 
 		Path path = null;
     Path oldPath = null;
-    String inode = Util.getInodeID(event.getPath());
-		
+    String inode;
 		// Si no esta instanciado el source informamos
 		switch(event.getType()) {
 		
 			case "ENTRY_CREATE":
+		    inode = Util.getInodeID(event.getPath());
         //Comprobamos si el inodo no existia, en cuyo caso se crea. Si ya existia viene de una renombrado.
         if (!getFilesObserved().containsKey(Util.getInodeID(event.getPath()))) {
           if (event.getSet().haveToProccess(event.getPath())) {
@@ -267,18 +269,13 @@ public class FileEventSourceListener extends AbstractSource implements
         // Notificamos nuevo fichero creado
         break;
 			case "ENTRY_MODIFY":
+		    inode = Util.getInodeID(event.getPath());
         if (!event.getSet().haveToProccess(event.getPath())) break;
         helper.process(event);
         break;
 			case "ENTRY_DELETE":
-				LOGGER.debug("Se ha eliminado el fichero de eventos: " + event.getPath());
-				try {
-					path = Paths.get(new File(event.getPath()).toURI());
-				} catch (Exception e) {
-					throw new WatchDirException("No se pudo abrir el fichero " + event.getPath(), e);
-				}
-				getFilesObserved().remove(inode);
-				break;
+				// No podemos obtener el inodo, el fichero ya no existe.
+			  break;
 			default:
 				LOGGER.info("El evento " + event.getPath() + " no se trata.");
 				break;

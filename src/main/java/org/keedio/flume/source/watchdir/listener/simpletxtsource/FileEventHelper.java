@@ -3,6 +3,7 @@ package org.keedio.flume.source.watchdir.listener.simpletxtsource;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -18,6 +19,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,6 +31,7 @@ import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.keedio.flume.source.watchdir.FileUtil;
@@ -52,17 +55,10 @@ public class FileEventHelper {
 
 	FileEventSourceListener listener;
 	private ArrayList<Event> buffer;
-  private String pattern;
-  private Pattern r;
-  private Matcher m;
 
   public FileEventHelper(FileEventSourceListener listener) {
 		this.listener = listener;
 		this.buffer = new ArrayList<>();
-		
-    String pattern = ".+\\{.+\\}";
-    Pattern r = Pattern.compile(pattern);
-    
 	}
   
   public synchronized ArrayList<Event> getBuffer() {
@@ -85,6 +81,7 @@ public class FileEventHelper {
 		} catch (Exception e) {
 			LOGGER.error("Error procesando el fichero: " + event.getPath());
 			LOGGER.error(e.getMessage());
+			e.printStackTrace();
 		}
 	}
 
@@ -96,9 +93,10 @@ public class FileEventHelper {
 	private void readLines(WatchDirEvent event) throws Exception {
 
 	  String path = event.getPath();
-		BufferedReader lReader = new BufferedReader(new FileReader(new File(path)));
+	  FileInputStream fis = new FileInputStream(new File(path));
+
 		String inode = Util.getInodeID(path);
-		
+		LOGGER.debug("ENTRAMOS EN EL HELPER......");
 		//
 		Long lastByte = 0L;
 		if (listener.getFilesObserved().containsKey(inode))
@@ -117,26 +115,30 @@ public class FileEventHelper {
 		}
 		
 		if (lastByte < 0) {
-			LOGGER.error("Se esta intentando procesar un fichero procedente del rotado");
 			return;
 		}
 		
-		lReader.skip(lastByte);
+		fis.skip(lastByte);
 		
 		try {
-			int lines = 0;
-			String line;
-			while ((line = lReader.readLine())!=null) {
+			
+			List<String> linesPending = IOUtils.readLines(fis);
+			
+			for (String line:linesPending) {
 			  // Find the gap
-
-			  m = r.matcher(line);
-			  if (m.find()) {
+			  if (!line.contains("{")) {
 			    LOGGER.debug("----------------------------------------------");
-			    LOGGER.debug("La línea viene truncada, volcamos el estado");
+          LOGGER.debug("Error procesando fichero " + path);
+			    LOGGER.debug("La línea viene truncada: " + line);
+			    LOGGER.debug("Volcamos el estado");
 			    LOGGER.debug(listener.getFilesObserved().toString());
           LOGGER.debug("----------------------------------------------");
+			  } else {
+			    LOGGER.debug("OK: " + path + " : " + line);
 			  }
 			  
+			  
+			  //LOGGER.debug("OK: " + line);
 				Event ev = EventBuilder.withBody(line.getBytes());
 				
 				// Put header props
@@ -169,7 +171,7 @@ public class FileEventHelper {
 			LOGGER.error("Error al procesar el fichero: " + event.getPath(), e);
 			throw e;
 		} finally {
-			lReader.close();
+			fis.close();
 		}
 	}
 	
