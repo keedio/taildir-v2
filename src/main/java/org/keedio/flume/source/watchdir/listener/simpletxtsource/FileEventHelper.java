@@ -94,7 +94,6 @@ public class FileEventHelper {
 	private void readLines(WatchDirEvent event) throws Exception {
 
 	  String path = event.getPath();
-	  FileInputStream fis = new FileInputStream(new File(path));
 
 		String inode = Util.getInodeID(path);
 		LOGGER.debug("ENTRAMOS EN EL HELPER......");
@@ -103,7 +102,7 @@ public class FileEventHelper {
 		if (listener.getFilesObserved().containsKey(inode)) {
 
 			synchronized (listener.getFilesObserved().get(inode)) {
-				processInode(event, path, inode);
+				processInode(path, inode);
 			}
 		} else {
 			// Probablemente se ha producido algún fallo de lo que no nos podamos recuperar
@@ -120,7 +119,7 @@ public class FileEventHelper {
 
 	}
 
-	private void processInode(WatchDirEvent event, String path, String inode) throws IOException {
+	private void processInode(String path, String inode) throws IOException {
 		Long lastByte = listener.getFilesObserved().get(inode).getPosition();
 
 		if (lastByte < 0) {
@@ -152,9 +151,9 @@ public class FileEventHelper {
 					// Put header props
 					Map<String, String> headers = new HashMap<String, String>();
 					if (listener.fileHeader)
-						headers.put(listener.fileHeaderName, event.getPath());
+						headers.put(listener.fileHeaderName, path);
 					if (listener.baseHeader)
-						headers.put(listener.baseHeaderName, new File(event.getPath()).getName());
+						headers.put(listener.baseHeaderName, new File(path).getName());
 					if (!headers.isEmpty())
 						ev.setHeaders(headers);
 
@@ -178,7 +177,7 @@ public class FileEventHelper {
 
 				}
 		} catch (IOException e) {
-			LOGGER.error("Error al procesar el fichero: " + event.getPath(), e);
+			LOGGER.error("Error al procesar el fichero: " + path, e);
 			throw e;
 		}
 	}
