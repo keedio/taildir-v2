@@ -103,7 +103,7 @@ public class FileEventHelper {
 		if (listener.getFilesObserved().containsKey(inode)) {
 
 			synchronized (listener.getFilesObserved().get(inode)) {
-				processInode(event, path, fis, inode);
+				processInode(event, path, inode);
 			}
 		} else {
 			// Probablemente se ha producido algún fallo de lo que no nos podamos recuperar
@@ -120,16 +120,15 @@ public class FileEventHelper {
 
 	}
 
-	private void processInode(WatchDirEvent event, String path, FileInputStream fis, String inode) throws IOException {
+	private void processInode(WatchDirEvent event, String path, String inode) throws IOException {
 		Long lastByte = listener.getFilesObserved().get(inode).getPosition();
 
 		if (lastByte < 0) {
 			return;
 		}
 
-		fis.skip(lastByte);
-
-		try {
+		try (FileInputStream fis = new FileInputStream(new File(path))){
+			fis.skip(lastByte);
 
 			List<String> linesPending = IOUtils.readLines(fis);
 
@@ -146,7 +145,6 @@ public class FileEventHelper {
 					} else {
 						LOGGER.debug("---OK: " + path + "|||" + line + "|||" + lastByte);
 					}
-
 
 					//LOGGER.debug("OK: " + line);
 					Event ev = EventBuilder.withBody(line.getBytes());
@@ -182,8 +180,6 @@ public class FileEventHelper {
 		} catch (IOException e) {
 			LOGGER.error("Error al procesar el fichero: " + event.getPath(), e);
 			throw e;
-		} finally {
-			fis.close();
 		}
 	}
 
