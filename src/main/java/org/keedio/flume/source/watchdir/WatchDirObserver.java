@@ -71,7 +71,7 @@ public class WatchDirObserver implements Runnable {
     		try{
         		listener.process(event);
     		} catch (WatchDirException e) {
-    			LOGGER.info("Error procesando el listener", e);
+    			LOGGER.info("Error procesando el listener", e);  
     		}
     	}
     }

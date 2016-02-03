@@ -88,7 +88,6 @@ public class FileEventSourceListener extends AbstractSource implements
 	private static final Logger LOGGER = LoggerFactory
 			
 			.getLogger(FileEventSourceListener.class);
-	private ExecutorService executor;
 	private Set<WatchDirObserver> monitor; 
 	private MetricsController metricsController;
 	private Set<WatchDirFileSet> fileSets;
@@ -203,7 +202,6 @@ public class FileEventSourceListener extends AbstractSource implements
 	@Override
 	public void start() {
 		LOGGER.info("Source Starting..");
-		executor = Executors.newFixedThreadPool(maxWorkers);
 		monitor = new HashSet<WatchDirObserver>();
 		
 		try {
@@ -231,7 +229,6 @@ public class FileEventSourceListener extends AbstractSource implements
 	@Override
 	public void stop() {
 		LOGGER.info("Stopping source");
-		executor.shutdown();
 		metricsController.stop();
 		super.stop();
 	}
@@ -247,23 +244,25 @@ public class FileEventSourceListener extends AbstractSource implements
 		switch(event.getType()) {
 		
 			case "ENTRY_CREATE":
+
 		    inode = Util.getInodeID(event.getPath());
         //Comprobamos si el inodo no existia, en cuyo caso se crea. Si ya existia viene de una renombrado.
         if (!getFilesObserved().containsKey(Util.getInodeID(event.getPath()))) {
-          if (event.getSet().haveToProccess(event.getPath())) {
-            InodeInfo info = new InodeInfo(0L, event.getPath());
-            getFilesObserved().put(inode, info);
-            metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
+          InodeInfo info = new InodeInfo(0L, event.getPath());
+          getFilesObserved().put(inode, info);
+          metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
 
-            LOGGER.debug("Se ha creado el fichero de eventos: " + event.getPath());
-          }
+          LOGGER.debug("EVENTO NEW: " + event.getPath());
         } else {
           // Viene de rotado. Cambiamos el nombre del fichero
           InodeInfo old = getFilesObserved().get(inode);
+          String oldPth = old.getFileName();
           old.setFileName(event.getPath());
           old.setPosition(0L);
           // y se marca para que no se vuelva a gestionar
           getFilesObserved().put(inode, old);
+          
+          LOGGER.debug("EVENTO RENAME: " + oldPth + " a " + event.getPath());
         }
         //helper.process(event);
         // Notificamos nuevo fichero creado
@@ -275,9 +274,10 @@ public class FileEventSourceListener extends AbstractSource implements
         break;
 			case "ENTRY_DELETE":
 				// No podemos obtener el inodo, el fichero ya no existe.
+			  LOGGER.debug("EVENTO DELETE: " + event.getPath());
 			  break;
 			default:
-				LOGGER.info("El evento " + event.getPath() + " no se trata.");
+				LOGGER.info("EVENTO UNKNOWN" + event.getPath() + " no se trata.");
 				break;
 		}
 	}
