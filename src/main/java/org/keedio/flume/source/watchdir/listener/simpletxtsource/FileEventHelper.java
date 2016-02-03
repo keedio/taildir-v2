@@ -1,41 +1,14 @@
 package org.keedio.flume.source.watchdir.listener.simpletxtsource;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.LineNumberReader;
-import java.io.StringWriter;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.EndElement;
-import javax.xml.stream.events.StartElement;
-import javax.xml.stream.events.XMLEvent;
+import java.util.*;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
-import org.keedio.flume.source.watchdir.FileUtil;
 import org.keedio.flume.source.watchdir.InodeInfo;
 import org.keedio.flume.source.watchdir.WatchDirEvent;
 import org.keedio.flume.source.watchdir.metrics.MetricsEvent;
@@ -56,6 +29,8 @@ public class FileEventHelper {
 
 	FileEventSourceListener listener;
 	private ArrayList<Event> buffer;
+
+	private static final Map<String, String> PATH_TO_INODES = new HashMap<>();
 
   public FileEventHelper(FileEventSourceListener listener) {
 		this.listener = listener;
@@ -96,12 +71,22 @@ public class FileEventHelper {
 	  String path = event.getPath();
 
 		String inode = Util.getInodeID(path);
+
+		synchronized (PATH_TO_INODES){
+			if (!PATH_TO_INODES.containsKey(path)){
+				PATH_TO_INODES.put(path, inode);
+			} else if (!PATH_TO_INODES.get(path).equals(inode)) {
+				LOGGER.error("Inode num changed for " + path + ", oldInode: " + PATH_TO_INODES.get(path) + ", newInode: " + inode);
+			}
+		}
+
 		LOGGER.debug("ENTRAMOS EN EL HELPER......");
 		//
 		Long lastByte = 0L;
 		if (listener.getFilesObserved().containsKey(inode)) {
 
 			synchronized (listener.getFilesObserved().get(inode)) {
+				LOGGER.debug(String.format("Acquired lock on: %s", path));
 				processInode(path, inode);
 			}
 		} else {
@@ -123,7 +108,16 @@ public class FileEventHelper {
 		Long lastByte = listener.getFilesObserved().get(inode).getPosition();
 
 		if (lastByte < 0) {
+			LOGGER.debug(String.format("Negative lastByte: %d", lastByte));
 			return;
+		}
+
+		Long fileSize = getBytesSize(path);
+
+		if (fileSize < lastByte){
+			LOGGER.debug(String.format("File size decreased. lastByte: %d, realFileSize: %d", lastByte, fileSize));
+
+			listener.getFilesObserved().get(inode).setPosition(0L);
 		}
 
 		try (FileInputStream fis = new FileInputStream(new File(path))){
