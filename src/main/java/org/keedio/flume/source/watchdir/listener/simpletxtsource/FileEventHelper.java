@@ -31,6 +31,7 @@ import javax.xml.stream.events.EndElement;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
@@ -127,14 +128,15 @@ public class FileEventHelper {
 			for (String line:linesPending) {
 			  // Find the gap
 			  if (!line.contains("{")) {
-			    LOGGER.debug("----------------------------------------------");
-          LOGGER.debug("Error procesando fichero " + path);
-			    LOGGER.debug("La línea viene truncada: " + line);
-			    LOGGER.debug("Volcamos el estado");
-			    LOGGER.debug(listener.getFilesObserved().toString());
-          LOGGER.debug("----------------------------------------------");
+			    LOGGER.debug("---KO: " + path + "|||" + line + "|||" + lastByte);
+          try {
+            FileUtils.copyFile(new File(path), new File("/tmp/" + path));
+            FileUtils.copyFile(new File(path + ".1"), new File("/tmp/" + path + ".1"));
+          } catch (Exception e) {
+            LOGGER.debug("No se puedieron copiar los ficheros de respaldo. Continuamos");
+          }
 			  } else {
-			    LOGGER.debug("OK: " + path + " : " + line);
+          LOGGER.debug("---OK: " + path + "|||" + line + "|||" + lastByte);
 			  }
 			  
 			  
