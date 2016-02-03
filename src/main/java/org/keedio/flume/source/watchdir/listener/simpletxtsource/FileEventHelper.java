@@ -99,9 +99,12 @@ public class FileEventHelper {
 		LOGGER.debug("ENTRAMOS EN EL HELPER......");
 		//
 		Long lastByte = 0L;
-		if (listener.getFilesObserved().containsKey(inode))
-			lastByte = listener.getFilesObserved().get(inode).getPosition();
-		else {
+		if (listener.getFilesObserved().containsKey(inode)) {
+
+			synchronized (listener.getFilesObserved().get(inode)) {
+				processInode(event, path, fis, inode);
+			}
+		} else {
 			// Probablemente se ha producido algún fallo de lo que no nos podamos recuperar
 			// Ponemos el contador de eventos al final del del fichero
 			LOGGER.debug("No se encontraba el registro en la tabla de contadores de lineas.");
@@ -113,60 +116,68 @@ public class FileEventHelper {
 			
 			return;
 		}
-		
+
+	}
+
+	private void processInode(WatchDirEvent event, String path, FileInputStream fis, String inode) throws IOException {
+		Long lastByte = listener.getFilesObserved().get(inode).getPosition();
+
 		if (lastByte < 0) {
 			return;
 		}
-		
-		fis.skip(lastByte);
-		
-		try {
-			
-			List<String> linesPending = IOUtils.readLines(fis);
-			
-			for (String line:linesPending) {
-			  // Find the gap
-			  if (!line.contains("{")) {
-			    LOGGER.debug("----------------------------------------------");
-          LOGGER.debug("Error procesando fichero " + path);
-			    LOGGER.debug("La línea viene truncada: " + line);
-			    LOGGER.debug("Volcamos el estado");
-			    LOGGER.debug(listener.getFilesObserved().toString());
-          LOGGER.debug("----------------------------------------------");
-			  } else {
-			    LOGGER.debug("OK: " + path + " : " + line);
-			  }
-			  
-			  
-			  //LOGGER.debug("OK: " + line);
-				Event ev = EventBuilder.withBody(line.getBytes());
-				
-				// Put header props
-				Map<String,String> headers = new HashMap<String, String>();
-				if (listener.fileHeader)
-					headers.put(listener.fileHeaderName, event.getPath());
-				if (listener.baseHeader)
-					headers.put(listener.baseHeaderName, new File(event.getPath()).getName());
-				if (!headers.isEmpty())
-					ev.setHeaders(headers);				
-				
-				
-				getBuffer().add(ev);
-				
-				lastByte =  lastByte + line.length() + 1;
-				
-				InodeInfo inodeInfo = new InodeInfo(lastByte, path);
-				listener.getFilesObserved().put(inode, inodeInfo);
 
-	    	// Notificamos un evento de nuevo mensaje
-	    	listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.NEW_EVENT));
-	    	
-	    	if (getBuffer().size() > listener.eventsCapacity) {
-	    	  listener.getChannelProcessor().processEventBatch(getBuffer());
-	    	  getBuffer().clear();
-	    	}
-	    	
-			}
+		fis.skip(lastByte);
+
+		try {
+
+			List<String> linesPending = IOUtils.readLines(fis);
+
+				for (String line : linesPending) {
+					// Find the gap
+					if (!line.contains("{")) {
+						LOGGER.debug("----------------------------------------------");
+						LOGGER.debug("Error procesando fichero " + path);
+						LOGGER.debug("La línea viene truncada: " + line);
+						LOGGER.debug("Volcamos el estado");
+						LOGGER.debug(listener.getFilesObserved().toString());
+						LOGGER.debug("----------------------------------------------");
+					} else {
+						LOGGER.debug("OK: " + path + " : " + line);
+					}
+
+
+					//LOGGER.debug("OK: " + line);
+					Event ev = EventBuilder.withBody(line.getBytes());
+
+					// Put header props
+					Map<String, String> headers = new HashMap<String, String>();
+					if (listener.fileHeader)
+						headers.put(listener.fileHeaderName, event.getPath());
+					if (listener.baseHeader)
+						headers.put(listener.baseHeaderName, new File(event.getPath()).getName());
+					if (!headers.isEmpty())
+						ev.setHeaders(headers);
+
+
+					getBuffer().add(ev);
+
+					lastByte = lastByte + line.length() + 1;
+
+					//InodeInfo inodeInfo = new InodeInfo(lastByte, path);
+					//listener.getFilesObserved().put(inode, inodeInfo);
+					listener.getFilesObserved().get(inode).setPosition(lastByte);
+
+
+					// Notificamos un evento de nuevo mensaje
+					listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.NEW_EVENT));
+
+					if (getBuffer().size() > listener.eventsCapacity) {
+						listener.getChannelProcessor().processEventBatch(getBuffer());
+						getBuffer().clear();
+					}
+
+				}
+
 		} catch (IOException e) {
 			LOGGER.error("Error al procesar el fichero: " + event.getPath(), e);
 			throw e;
@@ -174,7 +185,7 @@ public class FileEventHelper {
 			fis.close();
 		}
 	}
-	
+
 	public long getBytesSize(String filename)
 	{
         File url = null;
