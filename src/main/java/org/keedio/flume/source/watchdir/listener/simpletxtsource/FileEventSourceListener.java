@@ -37,6 +37,7 @@ import org.apache.flume.Context;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.source.AbstractSource;
+import org.apache.velocity.app.event.implement.IncludeNotFound;
 import org.keedio.flume.source.watchdir.CleanRemovedEventsProcessingThread;
 import org.keedio.flume.source.watchdir.FileUtil;
 import org.keedio.flume.source.watchdir.InodeInfo;
@@ -169,7 +170,7 @@ public class FileEventSourceListener extends AbstractSource implements
 
     new Thread(ser).start();
     new Thread(new AutocommitThread(this, autocommittime)).start();
-    new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime)).start();
+    //new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime)).start();
     
 	}
 	
@@ -234,33 +235,40 @@ public class FileEventSourceListener extends AbstractSource implements
 	}
 	
 	@Override
-	public void process(WatchDirEvent event) throws WatchDirException {
+	public synchronized void process(WatchDirEvent event) throws WatchDirException {
 
 
 		Path path = null;
     Path oldPath = null;
     String inode;
+    try {
+      inode = Util.getInodeID(event.getPath());
+    } catch (WatchDirException e) {
+      LOGGER.debug("Fichero inexistente. Salimos");
+      return;
+    }
+    InodeInfo info = getFilesObserved().get(inode);
 		// Si no esta instanciado el source informamos
 		switch(event.getType()) {
 		
 			case "ENTRY_CREATE":
 
-		    inode = Util.getInodeID(event.getPath());
+		    //inode = Util.getInodeID(event.getPath());
         //Comprobamos si el inodo no existia, en cuyo caso se crea. Si ya existia viene de una renombrado.
         if (!getFilesObserved().containsKey(Util.getInodeID(event.getPath()))) {
-          InodeInfo info = new InodeInfo(0L, event.getPath());
-          getFilesObserved().put(inode, info);
+          InodeInfo inf = new InodeInfo(0L, event.getPath());
+          getFilesObserved().put(inode, inf);
           metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
 
           LOGGER.debug("EVENTO NEW: " + event.getPath());
         } else {
           // Viene de rotado. Cambiamos el nombre del fichero
-          InodeInfo old = getFilesObserved().get(inode);
-          String oldPth = old.getFileName();
-          old.setFileName(event.getPath());
-          old.setPosition(0L);
+          //InodeInfo old = getFilesObserved().get(inode);
+          String oldPth = info.getFileName();
+          info.setFileName(event.getPath());
+          info.setPosition(0L);
           // y se marca para que no se vuelva a gestionar
-          getFilesObserved().put(inode, old);
+          getFilesObserved().put(inode, info);
           
           LOGGER.debug("EVENTO RENAME: " + oldPth + " a " + event.getPath());
         }
@@ -268,9 +276,30 @@ public class FileEventSourceListener extends AbstractSource implements
         // Notificamos nuevo fichero creado
         break;
 			case "ENTRY_MODIFY":
-		    inode = Util.getInodeID(event.getPath());
-        if (!event.getSet().haveToProccess(event.getPath())) break;
-        helper.process(event);
+		    if (info == null) {
+		      LOGGER.debug("Se inserta en fichero no monitorizado. Continuamos" + event.getPath());
+		      
+		      if (event.getSet().haveToProccess(event.getPath())) {
+	          LOGGER.debug("Fichero no catalogado, se añade a la lista de ficheros monitorizados: " + event.getPath());
+	          InodeInfo ii = new InodeInfo(0L, event.getPath());
+	          getFilesObserved().put(inode, ii);
+	          helper.process(inode);
+		      } else {
+	          LOGGER.debug("Se inserta en fichero no monitorizado. Continuamos" + event.getPath());
+	          getFilesObserved().remove(inode);
+	        }
+          break;
+		    }
+		    if (!info.getFileName().equals(event.getPath())) {
+		      LOGGER.debug("Se han desincronizado filesObserved y sistema de ficheros. Descartamos y esperamos...");
+		      getFilesObserved().remove(inode);
+		      break;
+		    }
+        if (!event.getSet().haveToProccess(event.getPath())) {
+          getFilesObserved().remove(inode);
+          break;
+        }
+        helper.process(inode);
         break;
 			case "ENTRY_DELETE":
 				// No podemos obtener el inodo, el fichero ya no existe.
@@ -282,7 +311,7 @@ public class FileEventSourceListener extends AbstractSource implements
 		}
 	}
 
-	public synchronized Map<String, InodeInfo> getFilesObserved() {
+	public Map<String, InodeInfo> getFilesObserved() {
 		return filesObserved;
 	}
 }	

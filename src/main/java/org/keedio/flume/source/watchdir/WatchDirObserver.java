@@ -155,33 +155,37 @@ public class WatchDirObserver implements Runnable {
     			}
     			
     			while (!fin) {
-    				// wait for key to be signaled
-    				WatchKey key;
-    				key = watcherSvc.take();
-    				Path dir = keys.get(key);
+    			  
+    			  try {
+              // wait for key to be signaled
+              WatchKey key;
+              key = watcherSvc.take();
+              Path dir = keys.get(key);
 
-    				for (WatchEvent<?> event : key.pollEvents()) {
-        				WatchEvent<Path> ev = cast(event);
-    					Path name = ev.context();
-    					Path path = dir.resolve(name);
-    					
-    					// Si se crea un nuevo directorio es necesario registrarlo de nuevo
-    					if (java.nio.file.Files.isDirectory(java.nio.file.Paths.get(path.toString()), NOFOLLOW_LINKS))
-    						registerAll(java.nio.file.Paths.get(path.toString()));
-    					else {
-        				update(new WatchDirEvent(path.toString(), event.kind().name(), set));    							
-    					}
-    					
-    				}
+              for (WatchEvent<?> event : key.pollEvents()) {
+                  WatchEvent<Path> ev = cast(event);
+                Path name = ev.context();
+                Path path = dir.resolve(name);
+                
+                // Si se crea un nuevo directorio es necesario registrarlo de nuevo
+                if (java.nio.file.Files.isDirectory(java.nio.file.Paths.get(path.toString()), NOFOLLOW_LINKS))
+                  registerAll(java.nio.file.Paths.get(path.toString()));
+                else {
+                  update(new WatchDirEvent(path.toString(), event.kind().name(), set));                 
+                }
+                
+              }
 
-    				// reset key and remove from set if directory no longer
-    				// accessible
-    				key.reset();
+              // reset key and remove from set if directory no longer
+              // accessible
+              key.reset();
 
-    				Thread.sleep(1000);
+              Thread.sleep(1000);
+    			    
+    			  } catch (Exception e) {
+    			    LOGGER.error("Error en bucle principal: " + e.getMessage());
+    			  }
     			}
-    		} catch (InterruptedException e) {
-    			LOGGER.info(e.getMessage(), e);
     		} catch (Exception e) {
     			LOGGER.info(e.getMessage(), e);
     		}
