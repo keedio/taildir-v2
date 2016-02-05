@@ -1,5 +1,6 @@
 package org.keedio.flume.source.watchdir.listener.simpletxtsource;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
@@ -7,6 +8,7 @@ import java.io.ObjectOutputStream;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.commons.io.FileUtils;
 import org.keedio.flume.source.watchdir.InodeInfo;
 import org.keedio.flume.source.watchdir.listener.xmlsource.WatchDirXMLWinEventSourceListener;
 import org.slf4j.Logger;
@@ -41,11 +43,22 @@ public class SerializeFilesThread implements Runnable {
 	}
 	
 	public Map<String, InodeInfo> getMapFromSerFile() throws Exception {
-		Map<String, InodeInfo> map = null;
+    Map<String, InodeInfo> map = null;
 		
-		FileInputStream fis = new FileInputStream(path);
-		ObjectInputStream ois = new ObjectInputStream(fis);
-		map = (Map<String, InodeInfo>) ois.readObject();
+	  try {
+	    
+	    FileInputStream fis = new FileInputStream(path);
+	    ObjectInputStream ois = new ObjectInputStream(fis);
+	    map = (Map<String, InodeInfo>) ois.readObject();
+	    
+	    map.get(map.keySet().toArray()[0]).getPosition();
+	  } catch (ClassCastException e) {
+	    LOGGER.error("El fichero de serializacion no es compatible. Se realiza backup del fichero y se creo un nuevo fichero vacío...");
+	    FileUtils.copyFile(new File(path), new File(path + ".bck"));
+	    FileUtils.forceDelete(new File(path));
+	    
+	    throw e;
+	  }
 			
 		return map;
 			
