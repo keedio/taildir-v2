@@ -1,5 +1,8 @@
 package org.keedio.flume.source.watchdir.txt;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,5 +36,26 @@ public class SerializeFilesThreadTest {
 		Assert.assertEquals(map.get("1").getFileName(), "test");
 		
 	}
+	
+  @Test
+  public void testBadSerializacion() throws Exception {
+   try {
+      Map<String, Long> map = new HashMap<>();
+      map.put("1", 0L);
+      
+      // Serailizamos un objeto incompatible
+      FileOutputStream fos = new FileOutputStream("/tmp/test.ser");
+      ObjectOutputStream oos = new ObjectOutputStream(fos);
+      oos.writeObject(map);   
+      
+      SerializeFilesThread ser = new SerializeFilesThread(listener, "/tmp/test.ser", 5);
+      Map<String, InodeInfo> aux = ser.getMapFromSerFile();
+      
+   } catch (ClassCastException e) {
+     System.out.println("Se tiene que crear el fichero de backup");
+   }
+    Assert.assertEquals(new File("/tmp/test.ser.bck").exists(), true);
+    
+  }
 	
 }
