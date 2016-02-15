@@ -105,11 +105,19 @@ public class FileEventHelper {
 
 		try (FileInputStream fis = new FileInputStream(new File(path))){
 			fis.skip(lastByte);
-
+			
 			List<String> linesPending = IOUtils.readLines(fis);
 
 				for (String line : linesPending) {
-					// Find the gap
+		      // validamos que el ultimo caracter sea un salto de linea.
+		      // Esto nos protege contra escrituras no atomicas de ficheros
+		      // Problema en el caso de que se escriban \n
+				  if (!line.endsWith("\n")) {
+				    LOGGER.debug("Lectura no atomica erronea. Esperamos al siguiente ciclo para lectura correcta.");
+				    return;
+				  }
+				  
+				  // Find the gap
 					if (!line.contains("{")) {
 						LOGGER.debug("---KO: " + path + "|||" + line + "|||" + lastByte);
 						try {
