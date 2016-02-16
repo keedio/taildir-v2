@@ -240,27 +240,13 @@ public class FileEventSourceListener extends AbstractSource implements
 		super.stop();
 	}
 	
-	private synchronized Map<String, Lock>  getLocks() {
-	  return locks;
-	}
-	
 	@Override
-	public void process(WatchDirEvent event) throws WatchDirException {
+	public synchronized void process(WatchDirEvent event) throws WatchDirException {
 
     String inode = "";
     
     try {
       inode = Util.getInodeID(event.getPath());
-      
-      Lock l = getLocks().get(inode);
-      if (l != null)
-        l.lock();
-      else {
-        l = new ReentrantLock();
-        l.lock();
-        getLocks().put(inode, l);
-      }
-        
       
       InodeInfo info = getFilesObserved().get(inode);
       // Si no esta instanciado el source informamos
@@ -286,7 +272,6 @@ public class FileEventSourceListener extends AbstractSource implements
             getFilesObserved().put(inode, info);
             
             LOGGER.debug("EVENTO RENAME: " + oldPth + " a " + event.getPath());
-            helper.process(inode);
           }
           //helper.process(event);
           // Notificamos nuevo fichero creado
@@ -329,8 +314,6 @@ public class FileEventSourceListener extends AbstractSource implements
     } catch (WatchDirException e) {
       LOGGER.debug("Error procesando el fichero");
       return;
-    } finally {
-      getLocks().get(inode).unlock();;
     }
 	}
 
