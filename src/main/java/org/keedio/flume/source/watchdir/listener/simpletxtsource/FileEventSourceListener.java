@@ -19,8 +19,10 @@
 package org.keedio.flume.source.watchdir.listener.simpletxtsource;
 
 import java.io.File;
+import java.io.RandomAccessFile;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.channels.FileLock;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -32,6 +34,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.flume.Context;
 import org.apache.flume.EventDrivenSource;
@@ -107,6 +111,7 @@ public class FileEventSourceListener extends AbstractSource implements
 	protected int eventsCapacity;
   protected int autocommittime;
 	private FileEventHelper helper;
+	private Map<String, Lock> locks;
 	
   public synchronized MetricsController getMetricsController() {
 		return metricsController;
@@ -157,6 +162,7 @@ public class FileEventSourceListener extends AbstractSource implements
 		
 		// Creamos los filesets
 		fileSets = new HashSet<WatchDirFileSet>();
+		locks = new HashMap<String, Lock>();
 		Iterator it = getCriterias.keySet().iterator();
 		while (it.hasNext()) {
 			Map<String, String> aux = (Map<String, String>)getCriterias.get(it.next());
@@ -234,81 +240,98 @@ public class FileEventSourceListener extends AbstractSource implements
 		super.stop();
 	}
 	
+	private synchronized Map<String, Lock>  getLocks() {
+	  return locks;
+	}
+	
 	@Override
-	public synchronized void process(WatchDirEvent event) throws WatchDirException {
+	public void process(WatchDirEvent event) throws WatchDirException {
 
-
-		Path path = null;
-    Path oldPath = null;
-    String inode;
+    String inode = "";
+    
     try {
       inode = Util.getInodeID(event.getPath());
+      
+      Lock l = getLocks().get(inode);
+      if (l != null)
+        l.lock();
+      else {
+        l = new ReentrantLock();
+        l.lock();
+        getLocks().put(inode, l);
+      }
+        
+      
+      InodeInfo info = getFilesObserved().get(inode);
+      // Si no esta instanciado el source informamos
+      switch(event.getType()) {
+      
+        case "ENTRY_CREATE":
+
+          //inode = Util.getInodeID(event.getPath());
+          //Comprobamos si el inodo no existia, en cuyo caso se crea. Si ya existia viene de una renombrado.
+          if (!getFilesObserved().containsKey(Util.getInodeID(event.getPath()))) {
+            InodeInfo inf = new InodeInfo(0L, event.getPath());
+            getFilesObserved().put(inode, inf);
+            metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
+
+            LOGGER.debug("EVENTO NEW: " + event.getPath());
+          } else {
+            // Viene de rotado. Cambiamos el nombre del fichero
+            //InodeInfo old = getFilesObserved().get(inode);
+            String oldPth = info.getFileName();
+            info.setFileName(event.getPath());
+            info.setPosition(0L);
+            // y se marca para que no se vuelva a gestionar
+            getFilesObserved().put(inode, info);
+            
+            LOGGER.debug("EVENTO RENAME: " + oldPth + " a " + event.getPath());
+            helper.process(inode);
+          }
+          //helper.process(event);
+          // Notificamos nuevo fichero creado
+          break;
+        case "ENTRY_MODIFY":
+          if (info == null) {
+            LOGGER.debug("Se inserta en fichero no monitorizado. Continuamos" + event.getPath());
+            
+            if (event.getSet().haveToProccess(event.getPath())) {
+              LOGGER.debug("Fichero no catalogado, se añade a la lista de ficheros monitorizados: " + event.getPath());
+              InodeInfo ii = new InodeInfo(0L, event.getPath());
+              getFilesObserved().put(inode, ii);
+              helper.process(inode);
+            } else {
+              LOGGER.debug("Se inserta en fichero no monitorizado. Continuamos" + event.getPath());
+              getFilesObserved().remove(inode);
+            }
+            break;
+          }
+          if (!info.getFileName().equals(event.getPath())) {
+            LOGGER.debug("Se han desincronizado filesObserved y sistema de ficheros. Descartamos y esperamos...");
+            getFilesObserved().remove(inode);
+            break;
+          }
+          if (!event.getSet().haveToProccess(event.getPath())) {
+            getFilesObserved().remove(inode);
+            break;
+          }
+          helper.process(inode);
+          break;
+        case "ENTRY_DELETE":
+          // No podemos obtener el inodo, el fichero ya no existe.
+          LOGGER.debug("EVENTO DELETE: " + event.getPath());
+          break;
+        default:
+          LOGGER.info("EVENTO UNKNOWN" + event.getPath() + " no se trata.");
+          break;
+      }
+      
     } catch (WatchDirException e) {
-      LOGGER.debug("Fichero inexistente. Salimos");
+      LOGGER.debug("Error procesando el fichero");
       return;
+    } finally {
+      getLocks().get(inode).unlock();;
     }
-    InodeInfo info = getFilesObserved().get(inode);
-		// Si no esta instanciado el source informamos
-		switch(event.getType()) {
-		
-			case "ENTRY_CREATE":
-
-		    //inode = Util.getInodeID(event.getPath());
-        //Comprobamos si el inodo no existia, en cuyo caso se crea. Si ya existia viene de una renombrado.
-        if (!getFilesObserved().containsKey(Util.getInodeID(event.getPath()))) {
-          InodeInfo inf = new InodeInfo(0L, event.getPath());
-          getFilesObserved().put(inode, inf);
-          metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
-
-          LOGGER.debug("EVENTO NEW: " + event.getPath());
-        } else {
-          // Viene de rotado. Cambiamos el nombre del fichero
-          //InodeInfo old = getFilesObserved().get(inode);
-          String oldPth = info.getFileName();
-          info.setFileName(event.getPath());
-          info.setPosition(0L);
-          // y se marca para que no se vuelva a gestionar
-          getFilesObserved().put(inode, info);
-          
-          LOGGER.debug("EVENTO RENAME: " + oldPth + " a " + event.getPath());
-        }
-        //helper.process(event);
-        // Notificamos nuevo fichero creado
-        break;
-			case "ENTRY_MODIFY":
-		    if (info == null) {
-		      LOGGER.debug("Se inserta en fichero no monitorizado. Continuamos" + event.getPath());
-		      
-		      if (event.getSet().haveToProccess(event.getPath())) {
-	          LOGGER.debug("Fichero no catalogado, se añade a la lista de ficheros monitorizados: " + event.getPath());
-	          InodeInfo ii = new InodeInfo(0L, event.getPath());
-	          getFilesObserved().put(inode, ii);
-	          helper.process(inode);
-		      } else {
-	          LOGGER.debug("Se inserta en fichero no monitorizado. Continuamos" + event.getPath());
-	          getFilesObserved().remove(inode);
-	        }
-          break;
-		    }
-		    if (!info.getFileName().equals(event.getPath())) {
-		      LOGGER.debug("Se han desincronizado filesObserved y sistema de ficheros. Descartamos y esperamos...");
-		      getFilesObserved().remove(inode);
-		      break;
-		    }
-        if (!event.getSet().haveToProccess(event.getPath())) {
-          getFilesObserved().remove(inode);
-          break;
-        }
-        helper.process(inode);
-        break;
-			case "ENTRY_DELETE":
-				// No podemos obtener el inodo, el fichero ya no existe.
-			  LOGGER.debug("EVENTO DELETE: " + event.getPath());
-			  break;
-			default:
-				LOGGER.info("EVENTO UNKNOWN" + event.getPath() + " no se trata.");
-				break;
-		}
 	}
 
 	public Map<String, InodeInfo> getFilesObserved() {

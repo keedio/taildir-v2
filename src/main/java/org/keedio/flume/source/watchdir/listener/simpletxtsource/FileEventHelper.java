@@ -87,7 +87,7 @@ public class FileEventHelper {
 
 	}
 
-	private void processInode(String path, String inode) throws IOException {
+	private void processInode(String path, String inode) throws Exception {
 		Long lastByte = listener.getFilesObserved().get(inode).getPosition();
 
 		if (lastByte < 0) {
@@ -103,29 +103,32 @@ public class FileEventHelper {
 			listener.getFilesObserved().get(inode).setPosition(0L);
 		}
 
-		try (FileInputStream fis = new FileInputStream(new File(path))){
-			fis.skip(lastByte);
+		try (FileInputStream fis = new FileInputStream(new File(path))){		  
 			
-			List<String> linesPending = IOUtils.readLines(fis);
+		  List<String> linesPending;
+		  if (lastByte > 0) {
+	      fis.skip(lastByte -1);
+	      
+	      linesPending = IOUtils.readLines(fis);
+	      if (!linesPending.get(0).equals("\n")) {
+	        LOGGER.debug("El mapa no esta sincronizado. Continuamos");
+	        this.listener.getFilesObserved().remove(inode);
+	        
+	        // seteamos el contador     
+	        return;       
+	      } else
+	        linesPending.remove(0);		    
+		  } else {
+        fis.skip(lastByte);
+        
+        linesPending = IOUtils.readLines(fis);		    
+		  }
 
+						
 				for (String line : linesPending) {
-		      // validamos que el ultimo caracter sea un salto de linea.
-		      // Esto nos protege contra escrituras no atomicas de ficheros
-		      // Problema en el caso de que se escriban \n
-				  if (!line.endsWith("\n")) {
-				    LOGGER.debug("Lectura no atomica erronea. Esperamos al siguiente ciclo para lectura correcta.");
-				    return;
-				  }
-				  
 				  // Find the gap
 					if (!line.contains("{")) {
 						LOGGER.debug("---KO: " + path + "|||" + line + "|||" + lastByte);
-						try {
-							FileUtils.copyFile(new File(path), new File("/tmp/" + path));
-							FileUtils.copyFile(new File(path + ".1"), new File("/tmp/" + path + ".1"));
-						} catch (Exception e) {
-							LOGGER.debug("No se puedieron copiar los ficheros de respaldo. Continuamos");
-						}
 					} else {
 						LOGGER.debug("---OK: " + path + "|||" + line + "|||" + lastByte);
 					}
@@ -164,7 +167,7 @@ public class FileEventHelper {
 		} catch (IOException e) {
 			LOGGER.error("Error al procesar el fichero: " + path, e);
 			throw e;
-		}
+		} 
 	}
 
 	public long getBytesSize(String filename)
