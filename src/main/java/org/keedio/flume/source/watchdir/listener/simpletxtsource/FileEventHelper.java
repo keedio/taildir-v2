@@ -72,6 +72,7 @@ public class FileEventHelper {
 		} catch (Exception e) {
 			LOGGER.error("Error procesando el fichero: " + path);
 			LOGGER.error(e.getMessage());
+			LOGGER.error(e.getStackTrace());
 
 			throw e;
 		}
