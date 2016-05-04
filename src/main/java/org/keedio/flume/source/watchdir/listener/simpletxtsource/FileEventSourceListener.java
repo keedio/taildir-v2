@@ -243,16 +243,16 @@ public class FileEventSourceListener extends AbstractSource implements
 	@Override
 	public synchronized void process(WatchDirEvent event) throws WatchDirException {
 
-    String inode = "";
+    String inode;
+    InodeInfo info;
     
     try {
-      inode = Util.getInodeID(event.getPath());
-      
-      InodeInfo info = getFilesObserved().get(inode);
       // Si no esta instanciado el source informamos
       switch(event.getType()) {
       
         case "ENTRY_CREATE":
+          inode = Util.getInodeID(event.getPath());
+          info = getFilesObserved().get(inode);
 
           //inode = Util.getInodeID(event.getPath());
           //Comprobamos si el inodo no existia, en cuyo caso se crea. Si ya existia viene de una renombrado.
@@ -260,6 +260,7 @@ public class FileEventSourceListener extends AbstractSource implements
             InodeInfo inf = new InodeInfo(0L, event.getPath());
             getFilesObserved().put(inode, inf);
             metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
+            helper.process(inode);
 
             LOGGER.debug("EVENTO NEW: " + event.getPath());
           } else {
@@ -273,10 +274,12 @@ public class FileEventSourceListener extends AbstractSource implements
             
             LOGGER.debug("EVENTO RENAME: " + oldPth + " a " + event.getPath());
           }
-          //helper.process(event);
           // Notificamos nuevo fichero creado
           break;
         case "ENTRY_MODIFY":
+          inode = Util.getInodeID(event.getPath());
+          info = getFilesObserved().get(inode);
+
           if (info == null) {
             LOGGER.debug("Se inserta en fichero no monitorizado. Continuamos" + event.getPath());
             

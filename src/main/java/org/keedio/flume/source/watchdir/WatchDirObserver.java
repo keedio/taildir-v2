@@ -154,7 +154,7 @@ public class WatchDirObserver implements Runnable {
         			}
     			}
     			
-    			while (!fin) {
+    			for (;;) {
     			  
     			  try {
               // wait for key to be signaled
@@ -180,7 +180,7 @@ public class WatchDirObserver implements Runnable {
               // accessible
               key.reset();
 
-              Thread.sleep(1000);
+              //Thread.sleep(1000);
     			    
     			  } catch (Exception e) {
     			    LOGGER.error("Error en bucle principal: " + e.getMessage());
