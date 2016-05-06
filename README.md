@@ -18,6 +18,7 @@ This project depends on next libs:
 * jpathwatch (v 0.95)
 * metrics-core (v 3.1.1)
 * stax
+* This source uses streams, so be sure to execute under a Java8 enviroment
 
 #Use
 Make the directory in flume installation path ```$FLUME_HOME/plugins.d/watchdir-v2/lib``` and copy the file   ```watchdir--X.Y.Z.jar```.  
