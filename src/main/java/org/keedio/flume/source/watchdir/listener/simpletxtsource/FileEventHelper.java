@@ -73,17 +73,7 @@ public class FileEventHelper {
 		LOGGER.debug("ENTRAMOS EN EL HELPER......");
 		//
 		Long lastByte = 0L;
-		if (realInode.equals(inode)) {
-			processInode(this.listener.getFilesObserved().get(inode).getFileName(), inode);
-		} else {
-			// Probablemente se ha producido algún fallo de lo que no nos podamos recuperar
-			// Ponemos el contador de eventos al final del del fichero
-			LOGGER.debug("El inode ha cambiado en el sistema operativo:" + inode + "," + realInode + "," + this.listener.getFilesObserved().get(inode).getFileName() );
-			this.listener.getFilesObserved().remove(inode);
-			
-			// seteamos el contador			
-			return;
-		}
+		processInode(this.listener.getFilesObserved().get(inode).getFileName(), inode);
 
 	}
 
@@ -97,12 +87,6 @@ public class FileEventHelper {
 
 		Long fileSize = getBytesSize(path);
 
-		if (fileSize < lastByte){
-			LOGGER.debug(String.format("File size decreased. lastByte: %d, realFileSize: %d", lastByte, fileSize));
-
-			listener.getFilesObserved().get(inode).setPosition(0L);
-		}
-
 		try (FileInputStream fis = new FileInputStream(new File(path))){		  
 			
 		  List<String> linesPending;
@@ -110,14 +94,7 @@ public class FileEventHelper {
 	      fis.skip(lastByte -1);
 	      
 	      linesPending = IOUtils.readLines(fis);
-	      if (!linesPending.get(0).equals("\n")) {
-	        LOGGER.debug("El mapa no esta sincronizado. Continuamos");
-	        this.listener.getFilesObserved().remove(inode);
-	        
-	        // seteamos el contador     
-	        return;       
-	      } else
-	        linesPending.remove(0);		    
+
 		  } else {
         fis.skip(lastByte);
         
@@ -127,13 +104,11 @@ public class FileEventHelper {
 						
 				for (String line : linesPending) {
 				  // Find the gap
-					if (!line.contains("{")) {
-						LOGGER.debug("---KO: " + path + "|||" + line + "|||" + lastByte);
-					} else {
-						LOGGER.debug("---OK: " + path + "|||" + line + "|||" + lastByte);
+          LOGGER.debug("MENSAJE:: " + line);
+					if (!line.contains("{") && !line.contains("}")) {
+					  continue;
 					}
 
-					//LOGGER.debug("OK: " + line);
 					Event ev = EventBuilder.withBody(line.getBytes());
 
 					// Put header props
@@ -150,8 +125,6 @@ public class FileEventHelper {
 
 					lastByte = lastByte + line.length() + 1;
 
-					//InodeInfo inodeInfo = new InodeInfo(lastByte, path);
-					//listener.getFilesObserved().put(inode, inodeInfo);
 					listener.getFilesObserved().get(inode).setPosition(lastByte);
 
 
