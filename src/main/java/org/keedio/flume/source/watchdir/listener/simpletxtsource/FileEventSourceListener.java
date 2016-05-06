@@ -157,6 +157,7 @@ public class FileEventSourceListener extends AbstractSource implements
 		try {
 			filesObserved = ser.getMapFromSerFile();
 		} catch (Exception e) {
+		  LOGGER.info("No se pudo deserializar el fichero.");
 			filesObserved = new HashMap<String, InodeInfo>();
 		}
 		
@@ -176,7 +177,7 @@ public class FileEventSourceListener extends AbstractSource implements
 
     new Thread(ser).start();
     new Thread(new AutocommitThread(this, autocommittime)).start();
-    //new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime)).start();
+    new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime)).start();
     
 	}
 	
@@ -264,11 +265,13 @@ public class FileEventSourceListener extends AbstractSource implements
             LOGGER.debug("EVENTO NEW: " + event.getPath() + " inodo: " + inode);
           } else {
             // Viene de rotado. 
-            // Procesamo los pendientes
-            helper.process(inode);
             
             // Cambiamos el nombre del fichero
             String oldPth = info.getFileName();
+            
+            if (event.getPath().equals(oldPth)) break;
+            // Procesamo los pendientes
+            helper.process(inode);            
             info.setFileName(event.getPath());
             info.setPosition(0L);
             // y se marca para que no se vuelva a gestionar

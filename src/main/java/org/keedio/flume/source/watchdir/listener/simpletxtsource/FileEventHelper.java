@@ -1,9 +1,14 @@
 package org.keedio.flume.source.watchdir.listener.simpletxtsource;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -78,37 +83,26 @@ public class FileEventHelper {
 	}
 
 	private void processInode(String path, String inode) throws Exception {
-		Long lastByte = listener.getFilesObserved().get(inode).getPosition();
-
-		if (lastByte < 0) {
-			LOGGER.debug(String.format("Negative lastByte: %d", lastByte));
+		Long lastLine = listener.getFilesObserved().get(inode).getPosition();
+		LOGGER.debug(String.format("Se procesa el fichero %s(%s) desde la linea %d", path, inode, lastLine));
+		
+		if (lastLine < 0) {
+			LOGGER.debug(String.format("Negative lastByte: %d", lastLine));
 			return;
 		}
 
-		Long fileSize = getBytesSize(path);
-
-		try (FileInputStream fis = new FileInputStream(new File(path))){		  
-			
-		  List<String> linesPending;
-		  if (lastByte > 0) {
-	      fis.skip(lastByte -1);
-	      
-	      linesPending = IOUtils.readLines(fis);
-
-		  } else {
-        fis.skip(lastByte);
-        
-        linesPending = IOUtils.readLines(fis);		    
-		  }
-
+		List<String> linesToProc;
+		
+		try (BufferedReader br = getBufferedReader(path)) {
+      //skip the first line and the columns length to get the data
+      //columns are identified as being splittable on the delimiter
+		  linesToProc = br.lines().skip(lastLine).map(s -> (String)s).collect(Collectors.toList());
+  } catch (Exception e) {
+      throw new RuntimeException(e);
+  }		
 						
-				for (String line : linesPending) {
-				  // Find the gap
-          LOGGER.debug("MENSAJE:: " + line);
-					if (!line.contains("{") && !line.contains("}")) {
-					  continue;
-					}
-
+				for (String line : linesToProc) {
+				  LOGGER.debug(String.format("%s(%s):Se procesa linea: %s", path, inode, line));
 					Event ev = EventBuilder.withBody(line.getBytes());
 
 					// Put header props
@@ -123,9 +117,9 @@ public class FileEventHelper {
 
 					getBuffer().add(ev);
 
-					lastByte = lastByte + line.length() + 1;
+					LOGGER.debug(String.format("%s(%s):Se procesa actualiza de %d a %d", path, inode, lastLine, lastLine+linesToProc.size()));
 
-					listener.getFilesObserved().get(inode).setPosition(lastByte);
+					listener.getFilesObserved().get(inode).setPosition(lastLine+linesToProc.size());
 
 
 					// Notificamos un evento de nuevo mensaje
@@ -137,19 +131,10 @@ public class FileEventHelper {
 					}
 
 				}
-		} catch (IOException e) {
-			LOGGER.error("Error al procesar el fichero: " + path, e);
-			throw e;
-		} 
+
 	}
 
-	public long getBytesSize(String filename)
-	{
-        File url = null;
-
-        url = new File(filename);
-            
-        return url.length();
-
-    }	
+  private static BufferedReader getBufferedReader(String fileName) throws FileNotFoundException {
+    return new BufferedReader(new FileReader(fileName));
+  }
 }
