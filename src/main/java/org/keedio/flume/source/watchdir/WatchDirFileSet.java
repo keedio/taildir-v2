@@ -102,6 +102,7 @@ public class WatchDirFileSet {
 		// Los ficheros que finalizan con el sufijo (.finished por defecto) no se tratan
 		if (getWhitelist().isEmpty() && getBlacklist().isEmpty()){
 			// Si las dos listas estan vacias notificamos
+      LOGGER.debug("NO LIST CONDITIONS. Go on");
 			return true;    							
 		} else {
 			// En caso contrario

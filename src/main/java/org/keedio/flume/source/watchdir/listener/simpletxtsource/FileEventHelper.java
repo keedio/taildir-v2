@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.flume.ChannelException;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.keedio.flume.source.watchdir.InodeInfo;
@@ -67,8 +68,18 @@ public class FileEventHelper {
 	}
 
 	public void commitPendings() {
-    listener.getChannelProcessor().processEventBatch(getBuffer());
-    getBuffer().clear();
+	  try {
+	    listener.getChannelProcessor().processEventBatch(getBuffer());
+	  } catch (ChannelException e) {
+	    LOGGER.error("No se han podido innyectar los eventos", e.getMessage());
+	    LOGGER.error("Mensajes perdidos: " + getBuffer().size());
+	    // Borramos el buffer
+      LOGGER.error("ERROR AL INYECTAR LOS DATOS EN EL CANAL. PARAMOS EL AGENTE.");
+      e.printStackTrace();
+      listener.stop();
+	  } finally {
+	    getBuffer().clear();
+	  }
 	}
 	
 	private void readLines(String inode) throws Exception {
@@ -103,6 +114,12 @@ public class FileEventHelper {
 						
 				for (String line : linesToProc) {
 				  LOGGER.debug(String.format("%s(%s):Se procesa linea: %s", path, inode, line));
+				  
+				  if (line.length() > listener.maxchars) {
+				    LOGGER.debug(String.format("Se superan el tamaño máximo, descartamos el mensaje --> %s", line));
+				    continue;
+				  }
+				  
 					Event ev = EventBuilder.withBody(line.getBytes());
 
 					// Put header props

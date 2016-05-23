@@ -90,6 +90,7 @@ public class FileEventSourceListener extends AbstractSource implements
 	private static final String BASE_HEADER_NAME = "basenameHeaderKey";	
   private static final String EVENTS_CAPACITY = "eventsCapacity"; 
   private static final String AUTOCOMMIT_TIME = "autocommittime"; 
+  private static final String MAX_CHARS = "maxcharsonmessage"; 
 	private static final Logger LOGGER = LoggerFactory
 			
 			.getLogger(FileEventSourceListener.class);
@@ -110,6 +111,7 @@ public class FileEventSourceListener extends AbstractSource implements
 	protected String baseHeaderName;
 	protected int eventsCapacity;
   protected int autocommittime;
+  protected int maxchars;
 	private FileEventHelper helper;
 	private Map<String, Lock> locks;
 	
@@ -151,6 +153,7 @@ public class FileEventSourceListener extends AbstractSource implements
 		baseHeaderName = context.getString(BASE_HEADER_NAME);
 		eventsCapacity = context.getInteger(EVENTS_CAPACITY)==null?1000:context.getInteger(EVENTS_CAPACITY);
     autocommittime = context.getInteger(AUTOCOMMIT_TIME)==null?10000:context.getInteger(AUTOCOMMIT_TIME)*1000;
+    maxchars = context.getInteger(MAX_CHARS)==null?100000:context.getInteger(MAX_CHARS);
 		
 		// Lanzamos el proceso de serializacion
 		ser = new SerializeFilesThread(this, pathToSerialize, timeToSer);
@@ -237,6 +240,11 @@ public class FileEventSourceListener extends AbstractSource implements
 	@Override
 	public void stop() {
 		LOGGER.info("Stopping source");
+		try {
+      ser.fromMapToSerFile();
+    } catch (Exception e) {
+      LOGGER.error("Error al serializar el mapa");
+    }
 		metricsController.stop();
 		super.stop();
 	}
@@ -260,7 +268,7 @@ public class FileEventSourceListener extends AbstractSource implements
             InodeInfo inf = new InodeInfo(0L, event.getPath());
             getFilesObserved().put(inode, inf);
             metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
-            helper.process(inode);
+            if (event.getSet().haveToProccess(event.getPath())) helper.process(inode);
 
             LOGGER.debug("EVENTO NEW: " + event.getPath() + " inodo: " + inode);
           } else {
@@ -271,11 +279,13 @@ public class FileEventSourceListener extends AbstractSource implements
             
             if (event.getPath().equals(oldPth)) break;
             // Procesamo los pendientes
-            helper.process(inode);            
-            info.setFileName(event.getPath());
-            info.setPosition(0L);
-            // y se marca para que no se vuelva a gestionar
-            getFilesObserved().put(inode, info);
+            if (event.getSet().haveToProccess(event.getPath())) {
+              helper.process(inode);            
+              info.setFileName(event.getPath());
+              info.setPosition(0L);
+              // y se marca para que no se vuelva a gestionar
+              getFilesObserved().put(inode, info);
+            }
             
             LOGGER.debug("EVENTO RENAME: " + oldPth + " a " + event.getPath() + " inodo: " + inode);
           }
@@ -296,7 +306,7 @@ public class FileEventSourceListener extends AbstractSource implements
             } 
             break;
           } else
-            helper.process(inode);
+            if (event.getSet().haveToProccess(event.getPath())) helper.process(inode);
           LOGGER.debug("EVENTO MODIFY: " + event.getPath() + " inodo: " + inode);
          break;
         case "ENTRY_DELETE":
@@ -309,7 +319,6 @@ public class FileEventSourceListener extends AbstractSource implements
       }
       
     } catch (WatchDirException e) {
-      LOGGER.debug("Error procesando el fichero");
       return;
     }
 	}
