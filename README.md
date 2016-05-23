@@ -69,6 +69,7 @@ Edit flume configuration file with the parameters above.
 |basenameHeaderKey||Key of file base name header
 |eventsCapacity|1000|Number of events until channel injection|
 |autocommittime|10|Number of seconds until channel injection|
+|maxcharsonmessage|100000|Max characters for messages events, if greater then message is discarded|
 
 * Example
 
