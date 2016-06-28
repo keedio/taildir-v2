@@ -279,7 +279,7 @@ public class FileEventSourceListener extends AbstractSource implements
             
             if (event.getPath().equals(oldPth)) break;
             // Procesamo los pendientes
-            if (event.getSet().haveToProccess(event.getPath())) {
+            if (event.getSet().haveToProccess(oldPth)) {
               helper.process(inode);            
               info.setFileName(event.getPath());
               info.setPosition(0L);
