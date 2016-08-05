@@ -296,7 +296,7 @@ public class FileEventSourceListener extends AbstractSource implements
           info = getFilesObserved().get(inode);
 
           if (info == null) {
-            LOGGER.debug("Se inserta en fichero no monitorizado. Continuamos " + event.getPath() + "inodo: " + inode);
+            LOGGER.debug("Se inserta en fichero no monitorizado. Continuamos " + event.getPath() + ", inodo: " + inode);
             
             if (event.getSet().haveToProccess(event.getPath())) {
               LOGGER.debug("Fichero no catalogado, se añade a la lista de ficheros monitorizados: " + event.getPath());

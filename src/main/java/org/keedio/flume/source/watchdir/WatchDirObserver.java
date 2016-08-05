@@ -48,7 +48,7 @@ public class WatchDirObserver implements Runnable {
 			Path directotyToWatch = Paths.get(set.getPath());
 	        watcherSvc = FileSystems.getDefault().newWatchService();
 	        registerAll(java.nio.file.Paths.get(directotyToWatch.toString()));
-
+			LOGGER.info("Monitorizando el directorio: " + set.getPath());
 		} catch (IOException e){
 			LOGGER.info("No se puede monitorizar el directorio: " + set.getPath(), e);
 		}

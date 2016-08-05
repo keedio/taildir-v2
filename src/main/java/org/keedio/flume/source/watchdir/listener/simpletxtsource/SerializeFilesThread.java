@@ -52,6 +52,8 @@ public class SerializeFilesThread implements Runnable {
 	    map = (Map<String, InodeInfo>) ois.readObject();
 	    
 	    map.get(map.keySet().toArray()[0]).getPosition();
+		  
+		  LOGGER.info("Map deserialized from ser file: " + map);
 	  } catch (ClassCastException e) {
 	    LOGGER.error("El fichero de serializacion no es compatible. Se realiza backup del fichero y se creo un nuevo fichero vacío...");
 	    FileUtils.copyFile(new File(path), new File(path + ".bck"));
@@ -65,6 +67,14 @@ public class SerializeFilesThread implements Runnable {
 	}
 
 	public void fromMapToSerFile() throws Exception {
+		LOGGER.info("fromMapToSerFile: writing ser file with the following content: " + listener.getFilesObserved());
+        
+		try {
+			FileUtils.copyFile(new File(path), new File(path + ".bck"));
+		} catch (Exception e) {
+			LOGGER.warn(e.getMessage());
+		}
+			
 		FileOutputStream fos = new FileOutputStream(path);
 		ObjectOutputStream oos = new ObjectOutputStream(fos);
 		oos.writeObject(listener.getFilesObserved());			

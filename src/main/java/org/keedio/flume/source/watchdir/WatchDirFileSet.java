@@ -108,14 +108,15 @@ public class WatchDirFileSet {
 			// En caso contrario
 			// Comprobamos si esta en la blacklist
 			if (!getWhitelist().isEmpty() && match(getWhitelist(), file)){
-				LOGGER.debug("Whitelisted. Go on");
+				LOGGER.debug("Whitelisted. Go on. file: " + file);
 				return true;        							//break;
 			} else if (!getBlacklist().isEmpty() && !match(getBlacklist(), file)) {
-				LOGGER.debug("Not in blacklisted. Go on");
+				LOGGER.debug("Not in blacklisted. Go on. file: " + file);
 				return true;
 			}
 		}
-		
+
+		LOGGER.debug(file + " has been either blacklisted or not in the whitelist");
 		return false;
 		
 	}

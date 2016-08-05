@@ -32,8 +32,7 @@ public class InodeInfo implements Serializable {
     }
 
     public String toString() {
-      
-      return "Position: " + position + ", Filename: " + fileName;
+      return "{\"position\": " + position + ", \"filename\": " + fileName + "}";
       
     }
     

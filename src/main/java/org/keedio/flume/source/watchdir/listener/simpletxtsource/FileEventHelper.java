@@ -52,15 +52,21 @@ public class FileEventHelper {
       Date inicio = new Date();
       int procesados = 0;
       path = this.listener.getFilesObserved().get(inode).getFileName();
+      
+      File file = new File(path);
+      
+      if (file.exists()) {
+        readLines(inode);
 
-      readLines(inode);
+        long intervalo = new Date().getTime() - inicio.getTime();
 
-      long intervalo = new Date().getTime() - inicio.getTime();
+        // Notificamos el tiempo de procesado para las metricas
+        listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.MEAN_FILE_PROCESS, intervalo));
+        listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.TOTAL_FILE_EVENTS, procesados));
 
-      // Notificamos el tiempo de procesado para las metricas
-      listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.MEAN_FILE_PROCESS, intervalo));
-      listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.TOTAL_FILE_EVENTS, procesados));
-
+      } else {
+        LOGGER.warn("File '" + file + "' associated with inode '"+inode+"' does not exists and cannot be processed.");
+      }
     } catch (Exception e) {
       LOGGER.error("Error procesando el fichero: " + path);
       LOGGER.error(e.getMessage());
@@ -75,23 +81,23 @@ public class FileEventHelper {
       LOGGER.error("No se han podido innyectar los eventos", e.getMessage());
       LOGGER.error("Mensajes perdidos: " + getBuffer().size());
       // Borramos el buffer
-      LOGGER.error("ERROR AL INYECTAR LOS DATOS EN EL CANAL. PARAMOS EL AGENTE.");
-      e.printStackTrace();
+      LOGGER.error("ERROR AL INYECTAR LOS DATOS EN EL CANAL. PARAMOS EL AGENTE.",e);
+      Util.printFilesObserved(listener.getFilesObserved());
       listener.stop();
     } catch (Exception e) {
-      LOGGER.error("Excepcion general por los interceptores.");
-      e.printStackTrace();
+      LOGGER.error("Excepcion general por los interceptores.",e);
+
+      Util.printFilesObserved(listener.getFilesObserved());
     } catch (Throwable e) {
-      LOGGER.error("Excepcion tipo throiwable por los interceptores.");
-      e.printStackTrace();
+      LOGGER.error("Excepcion tipo throiwable por los interceptores.",e);
+
+      Util.printFilesObserved(listener.getFilesObserved());
     } finally {
       getBuffer().clear();
     }
   }
 
   private void readLines(String inode) throws Exception {
-
-    String realInode = Util.getInodeID(this.listener.getFilesObserved().get(inode).getFileName());
 
     LOGGER.debug("ENTRAMOS EN EL HELPER......");
     //

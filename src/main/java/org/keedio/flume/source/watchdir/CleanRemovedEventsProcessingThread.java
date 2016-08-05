@@ -47,6 +47,7 @@ public class CleanRemovedEventsProcessingThread implements Runnable {
         InodeInfo inode = inodes.get(inodeKey);
         File file = new File(inode.getFileName());
         if (!file.exists()) {
+          LOGGER.info("Removing inodekey '" + inodeKey + "' associated with file '"+file.getAbsolutePath()+"'");
           listener.getFilesObserved().remove(inodeKey);
         }
         } catch (Exception e) {

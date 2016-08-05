@@ -1,17 +1,24 @@
 package org.keedio.flume.source.watchdir.util;
 
+import org.keedio.flume.source.watchdir.InodeInfo;
 import org.keedio.flume.source.watchdir.WatchDirException;
+import org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Map;
 
 /**
  * Created by rolmo on 16/12/15.
  */
 public class Util {
-
+    private static final Logger LOGGER = LoggerFactory
+            .getLogger(Util.class);
+    
     public static String getInodeID(String file) throws WatchDirException {
 
         BasicFileAttributes attr = null;
@@ -27,5 +34,16 @@ public class Util {
         String inode = s.substring(s.indexOf("ino=") + 4, s.indexOf(")"));
 
         return inode;
+    }
+    
+    public static void printFilesObserved(Map<String, InodeInfo> files){
+        if (files == null || files.size() == 0){
+            LOGGER.warn("No files monitored");
+        } else {
+            LOGGER.warn("Files monitored:");
+            for (Map.Entry<String, InodeInfo> entry : files.entrySet()) {
+                LOGGER.info(entry.getKey() + " -> " + entry.getValue());
+            }
+        }
     }
 }
