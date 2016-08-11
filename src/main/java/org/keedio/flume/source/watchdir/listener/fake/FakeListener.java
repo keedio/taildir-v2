@@ -15,6 +15,4 @@ public class FakeListener implements WatchDirListener {
 	public void process(WatchDirEvent event) throws WatchDirException {
 		System.out.println("Got event: " + event.getPath() + " " + event.getType());
 	}
-
-
 }

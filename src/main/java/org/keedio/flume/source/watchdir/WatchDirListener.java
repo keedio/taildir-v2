@@ -9,5 +9,4 @@ public interface WatchDirListener {
 	 * @throws WatchDirException if an error occurs while processing.
 	 */
 	public void process(WatchDirEvent event) throws WatchDirException;
-
 }

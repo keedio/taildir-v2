@@ -17,6 +17,7 @@ import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.keedio.flume.source.watchdir.InodeInfo;
 import org.keedio.flume.source.watchdir.WatchDirEvent;
+import org.keedio.flume.source.watchdir.listener.LineReadListener;
 import org.keedio.flume.source.watchdir.metrics.MetricsEvent;
 import org.keedio.flume.source.watchdir.util.Util;
 import org.slf4j.Logger;
@@ -35,6 +36,11 @@ public class FileEventHelper {
 
   FileEventSourceListener listener;
   private List<Event> buffer;
+  private LineReadListener lineReadListener;
+  
+  public void setLineReadListener(LineReadListener lineReadListener){
+    this.lineReadListener = lineReadListener;
+  }
 
   public FileEventHelper(FileEventSourceListener listener) {
     this.listener = listener;
@@ -52,7 +58,7 @@ public class FileEventHelper {
       Date inicio = new Date();
       int procesados = 0;
       path = this.listener.getFilesObserved().get(inode).getFileName();
-      
+      LOGGER.debug("Processing inode:" + inode + ", path: " + path);
       File file = new File(path);
       
       if (file.exists()) {
@@ -127,6 +133,9 @@ public class FileEventHelper {
 
     for (String line : linesToProc) {
       LOGGER.debug(String.format("%s(%s):Se procesa linea: %s", path, inode, line));
+      if (lineReadListener != null){
+        lineReadListener.lineRead(line);
+      }
 
       if (line.length() > listener.maxchars) {
         LOGGER.debug(String.format("Se superan el tamaño máximo, descartamos el mensaje --> %s", line));
