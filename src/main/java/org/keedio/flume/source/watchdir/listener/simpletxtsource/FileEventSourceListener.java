@@ -64,13 +64,11 @@ import com.google.common.base.Preconditions;
 
 
 /**
- *
- * Implementation of a source of flume that consumes XML files that follow 
- * the standard architecture for monitoring events microsoft (WMI standard). 
+ * Implementation of a source of flume that consumes XML files that follow
+ * the standard architecture for monitoring events microsoft (WMI standard).
  * <p>
  * The different events of the created file (Event tag block) are extracted and
  * sent to the corresponding channel.
- *
  */
 public class FileEventSourceListener extends AbstractSource implements
         Configurable, EventDrivenSource, WatchDirListener {
@@ -113,7 +111,7 @@ public class FileEventSourceListener extends AbstractSource implements
     protected int eventsCapacity;
     protected int autocommittime;
     protected int maxchars;
-    private FileEventHelper helper;
+    protected FileEventHelper helper;
     private Map<String, Lock> locks;
 
     public void setLineReadListener(LineReadListener lineReadListener) {
@@ -284,17 +282,47 @@ public class FileEventSourceListener extends AbstractSource implements
 
                         LOGGER.debug("EVENTO RENAME: " + oldPth + " a " + event.getPath() + " inodo: " + inode);
 
-                        if (event.getPath().equals(oldPth)) break;
-                        // Procesamo los pendientes
-                        if (event.getSet().haveToProccess(oldPth)) {
-                            LOGGER.debug("Processing inode:" + inode);
-                            info.setFileName(event.getPath());
-                            //info.setPosition(0L);
-                            helper.process(inode);
-                            // y se marca para que no se vuelva a gestionar
-                            getFilesObserved().remove(inode);
+                        if (event.getPath().equals(oldPth)) {
+                            break;
                         }
 
+                        // Procesamo los eventos pendientes en el fichero rotado.
+                        if (event.getSet().haveToProccess(oldPth)) {
+                            LOGGER.debug("Processing pending lines for inode:" + inode);
+                            info.setFileName(event.getPath());
+                            helper.process(inode);
+                        }
+                        
+                        /* 
+                        se marca el INODE para que NO se vuelva a gestionar.
+                        
+                        ¿Porqué esto lo hemos movido fuera del IF?
+                        
+                        Se ha verificado la siguiente casuistica:
+                        - Hay una whitelist que especifica el patrón "kosmos-access_log".
+                        - En el directorio monitorizado existen dos ficheros:
+                            - kosmos-access_log, inode 273
+                            - kosmos-error_log, inode 269 (este segundo fichero nunca se procesa)
+                        - Los dos ficheros rotan contemporaneamente a:
+                            - kosmos-access_log.2016-08-14
+                            - kosmos-error_log.2016-08-14
+                            
+                        - Se generan dos nuevos ficheros:
+                            - kosmos-access_log, inode 269!!
+                            - kosmos-error_log, inode 284
+                            
+                        Se genera un evento de tipo rename kosmos-error_log a kosmos-acces_log 
+                            (el nuevo fichero ereda el mismo inode ID!!)
+                        La condición del IF no se virifica pq el "oldPath" es relativo a un fichero que 
+                            no se tenía que procesar y el listado de filesObserved se queda en un estado inconsistente.
+                            
+                        Por lo tanto, siempre es necesario actualizar el listado de ficheros a procesar.
+                        
+                        Se ha añadido la clase de test:
+                        org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventSourceListenerStaticTest
+                        para comprobar de forma automatica esta condición.
+                        */
+                        getFilesObserved().remove(inode);
                     }
                     // Notificamos nuevo fichero creado
                     break;
