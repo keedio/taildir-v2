@@ -41,9 +41,7 @@ import org.apache.flume.Context;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.source.AbstractSource;
-import org.apache.velocity.app.event.implement.IncludeNotFound;
 import org.keedio.flume.source.watchdir.CleanRemovedEventsProcessingThread;
-import org.keedio.flume.source.watchdir.FileUtil;
 import org.keedio.flume.source.watchdir.InodeInfo;
 import org.keedio.flume.source.watchdir.WatchDirEvent;
 import org.keedio.flume.source.watchdir.WatchDirException;
@@ -64,13 +62,11 @@ import com.google.common.base.Preconditions;
 
 
 /**
- *
- * Implementation of a source of flume that consumes XML files that follow 
- * the standard architecture for monitoring events microsoft (WMI standard). 
+ * Implementation of a source of flume that consumes XML files that follow
+ * the standard architecture for monitoring events microsoft (WMI standard).
  * <p>
  * The different events of the created file (Event tag block) are extracted and
  * sent to the corresponding channel.
- *
  */
 public class FileEventSourceListener extends AbstractSource implements
         Configurable, EventDrivenSource, WatchDirListener {
@@ -103,14 +99,14 @@ public class FileEventSourceListener extends AbstractSource implements
             .getLogger(FileEventSourceListener.class);
     private Set<WatchDirObserver> monitor;
     private MetricsController metricsController;
-    private Set<WatchDirFileSet> fileSets;
+    protected Set<WatchDirFileSet> fileSets;
     protected Map<String, Properties> dirProps;
     private boolean readOnStartUp;
     private int maxWorkers = 10;
     protected int bufferSize = 1024;
     protected String suffix;
     protected Map<String, InodeInfo> filesObserved;
-    private SerializeFilesThread ser;
+    protected SerializeFilesThread ser;
     private boolean followLinks;
     protected boolean fileHeader;
     protected String fileHeaderName;
@@ -119,8 +115,12 @@ public class FileEventSourceListener extends AbstractSource implements
     protected int eventsCapacity;
     protected int autocommittime;
     protected int maxchars;
-    private FileEventHelper helper;
+    protected FileEventHelper helper;
     private Map<String, Lock> locks;
+    
+    private Thread autoCommitThread = null;
+    private Thread cleanRemovedEventsProcessingThread = null;
+    private Thread serializeFilesThread = null;
 
     //Multiline
     protected boolean multilineActive;
@@ -157,9 +157,9 @@ public class FileEventSourceListener extends AbstractSource implements
 
     @Override
     public void configure(Context context) {
-
         LOGGER.info("Source Configuring..");
-
+        printVersionNumber();
+        
         metricsController = new MetricsController();
 
         Map<String, String> criterias = context.getSubProperties(CONFIG_DIRS);
@@ -189,7 +189,9 @@ public class FileEventSourceListener extends AbstractSource implements
 
 
         // Lanzamos el proceso de serializacion
-        ser = new SerializeFilesThread(this, pathToSerialize, timeToSer);
+        if (ser == null)
+            ser = new SerializeFilesThread(this, pathToSerialize, timeToSer);
+        
         try {
             filesObserved = ser.getMapFromSerFile();
         } catch (Exception e) {
@@ -198,7 +200,10 @@ public class FileEventSourceListener extends AbstractSource implements
         }
 
         // Creamos los filesets
-        fileSets = new HashSet<WatchDirFileSet>();
+        
+        if (fileSets == null)
+            fileSets = new HashSet<WatchDirFileSet>();
+        
         locks = new HashMap<String, Lock>();
         Iterator it = getCriterias.keySet().iterator();
         while (it.hasNext()) {
@@ -211,10 +216,12 @@ public class FileEventSourceListener extends AbstractSource implements
         helper = new FileEventHelper(this);
         Preconditions.checkState(!fileSets.isEmpty(), "Bad configuration, review documentation on https://github.com/keedio/XMLWinEvent/blob/master/README.md");
 
-        new Thread(ser).start();
-        new Thread(new AutocommitThread(this, autocommittime)).start();
-        new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime)).start();
-
+        serializeFilesThread = new Thread(ser);
+        serializeFilesThread.start();
+        autoCommitThread =  new Thread(new AutocommitThread(this, autocommittime));
+        autoCommitThread.start();
+        cleanRemovedEventsProcessingThread = new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime));
+        cleanRemovedEventsProcessingThread.start();
     }
 
     public static Map<String, Map<String, String>> getMapProperties(Map<String, String> all) {
@@ -279,6 +286,17 @@ public class FileEventSourceListener extends AbstractSource implements
             LOGGER.error("Error al serializar el mapa");
         }
         metricsController.stop();
+        
+        if (serializeFilesThread != null && serializeFilesThread.isAlive()){
+            serializeFilesThread.interrupt();
+        }
+        if (autoCommitThread != null && autoCommitThread.isAlive()){ 
+            autoCommitThread.interrupt();
+        }
+        if (cleanRemovedEventsProcessingThread != null && cleanRemovedEventsProcessingThread.isAlive()){
+            cleanRemovedEventsProcessingThread.interrupt();
+        }
+        
         super.stop();
     }
 
@@ -287,23 +305,32 @@ public class FileEventSourceListener extends AbstractSource implements
 
         String inode;
         InodeInfo info;
-
+        Map<String, InodeInfo> inodes = getFilesObserved();
+        
         try {
             // Si no esta instanciado el source informamos
             switch (event.getType()) {
 
                 case "ENTRY_CREATE":
                     inode = Util.getInodeID(event.getPath());
-                    info = getFilesObserved().get(inode);
+                    info = inodes.get(inode);
 
                     //Comprobamos si el inodo no existia, en cuyo caso se crea. Si ya existia viene de una renombrado.
-                    if (!getFilesObserved().containsKey(Util.getInodeID(event.getPath()))) {
-                        InodeInfo inf = new InodeInfo(0L, event.getPath());
-                        getFilesObserved().put(inode, inf);
-                        metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
-                        if (event.getSet().haveToProccess(event.getPath())) helper.process(inode);
-
-                        LOGGER.debug("EVENTO NEW: " + event.getPath() + " inodo: " + inode);
+                    if (!inodes.containsKey(Util.getInodeID(event.getPath()))) {
+                        if (event.getSet().haveToProccess(event.getPath())) {
+                            InodeInfo inf = new InodeInfo(0L, event.getPath());
+                            
+                            synchronized (inodes) {
+                                inodes.put(inode, inf);
+                            }
+                            metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
+                            if (event.getSet().haveToProccess(event.getPath())) 
+                                helper.process(inode);
+                            LOGGER.debug("EVENTO NEW: " + event.getPath() + " inodo: " + inode);
+                        } else {
+                            LOGGER.debug("File '"+event.getPath()+"' will not be added to the list of observed files");
+                        }
+                        
                     } else {
                         // Viene de rotado. 
 
@@ -312,23 +339,55 @@ public class FileEventSourceListener extends AbstractSource implements
 
                         LOGGER.debug("EVENTO RENAME: " + oldPth + " a " + event.getPath() + " inodo: " + inode);
 
-                        if (event.getPath().equals(oldPth)) break;
-                        // Procesamo los pendientes
-                        if (event.getSet().haveToProccess(oldPth)) {
-                            LOGGER.debug("Processing inode:" + inode);
-                            info.setFileName(event.getPath());
-                            //info.setPosition(0L);
-                            helper.process(inode);
-                            // y se marca para que no se vuelva a gestionar
-                            getFilesObserved().remove(inode);
+                        if (event.getPath().equals(oldPth)) {
+                            break;
                         }
 
+                        // Procesamo los eventos pendientes en el fichero rotado.
+                        if (event.getSet().haveToProccess(oldPth)) {
+                            LOGGER.debug("Processing pending lines for inode:" + inode);
+                            info.setFileName(event.getPath());
+                            helper.process(inode);
+                        }
+                        
+                        /* 
+                        se marca el INODE para que NO se vuelva a gestionar.
+                        
+                        ¿Porqué esto lo hemos movido fuera del IF?
+                        
+                        Se ha verificado la siguiente casuistica:
+                        - Hay una whitelist que especifica el patrón "kosmos-access_log".
+                        - En el directorio monitorizado existen dos ficheros:
+                            - kosmos-access_log, inode 273
+                            - kosmos-error_log, inode 269 (este segundo fichero nunca se procesa)
+                        - Los dos ficheros rotan contemporaneamente a:
+                            - kosmos-access_log.2016-08-14
+                            - kosmos-error_log.2016-08-14
+                            
+                        - Se generan dos nuevos ficheros:
+                            - kosmos-access_log, inode 269!!
+                            - kosmos-error_log, inode 284
+                            
+                        Se genera un evento de tipo rename kosmos-error_log a kosmos-acces_log 
+                            (el nuevo fichero ereda el mismo inode ID!!)
+                        La condición del IF no se virifica pq el "oldPath" es relativo a un fichero que 
+                            no se tenía que procesar y el listado de filesObserved se queda en un estado inconsistente.
+                            
+                        Por lo tanto, siempre es necesario actualizar el listado de ficheros a procesar.
+                        
+                        Se ha añadido la clase de test:
+                        org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventSourceListenerStaticTest
+                        para comprobar de forma automatica esta condición.
+                        */
+                        synchronized (inodes) {
+                            inodes.remove(inode);
+                        }
                     }
                     // Notificamos nuevo fichero creado
                     break;
                 case "ENTRY_MODIFY":
                     inode = Util.getInodeID(event.getPath());
-                    info = getFilesObserved().get(inode);
+                    info = inodes.get(inode);
 
                     if (info == null) {
                         LOGGER.debug("Se inserta en fichero no monitorizado. Continuamos " + event.getPath() + ", inodo: " + inode);
@@ -336,7 +395,9 @@ public class FileEventSourceListener extends AbstractSource implements
                         if (event.getSet().haveToProccess(event.getPath())) {
                             LOGGER.debug("Fichero no catalogado, se añade a la lista de ficheros monitorizados: " + event.getPath());
                             InodeInfo ii = new InodeInfo(0L, event.getPath());
-                            getFilesObserved().put(inode, ii);
+                            synchronized (inodes) {
+                                inodes.put(inode, ii);
+                            }
                             helper.process(inode);
                         }
                         break;
@@ -362,5 +423,20 @@ public class FileEventSourceListener extends AbstractSource implements
 
     public synchronized Map<String, InodeInfo> getFilesObserved() {
         return filesObserved;
+    }
+    
+    private void printVersionNumber(){
+        try {
+            final Properties properties = new Properties();
+            properties.load(this.getClass().getClassLoader().getResourceAsStream("taildir-v2.properties"));
+            
+            String groupId = properties.getProperty("groupId");
+            String artifactId = properties.getProperty("artifactId");
+            String version = properties.getProperty("version");
+            String mvnCoords = groupId + ":" + artifactId + ":" + version;
+            LOGGER.info("Starting taildir agent '" + mvnCoords + "'");
+        } catch (Exception ex){
+            LOGGER.error("Cannot retrieve taildir agent version number");
+        }
     }
 }	
