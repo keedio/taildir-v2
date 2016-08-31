@@ -92,6 +92,12 @@ public class FileEventSourceListener extends AbstractSource implements
     private static final String EVENTS_CAPACITY = "eventsCapacity";
     private static final String AUTOCOMMIT_TIME = "autocommittime";
     private static final String MAX_CHARS = "maxcharsonmessage";
+    private static final String MULTILINE_ACTIVE = "multilineActive";
+    private static final String MULTILINE_REGEX = "multilineRegex";
+    private static final String MULTILINE_FIRST_LINE_REGEX = "multilineFirstLineRegex";
+    private static final String MULTILINE_NEGATE_REGEX = "multilineNegateRegex";
+    private static final String MULTILINE_ASIGN_TO_PREVIOUS_LINE = "multilineAssignToPreviousLine";
+    private static final String MULTILINE_FLUSH_ENTIRE_BUFFER = "multilineFlushEntireBuffer";
     private static final Logger LOGGER = LoggerFactory
 
             .getLogger(FileEventSourceListener.class);
@@ -115,6 +121,19 @@ public class FileEventSourceListener extends AbstractSource implements
     protected int maxchars;
     private FileEventHelper helper;
     private Map<String, Lock> locks;
+
+    //Multiline
+    protected boolean multilineActive;
+    protected String multilineRegex;
+    protected String multilineFirstLineRegex;
+    protected boolean multilineNegateRegex;
+    protected boolean multilineAssignToPreviousLine;
+    protected boolean multilineFlushEntireBuffer;
+
+
+
+
+
 
     public void setLineReadListener(LineReadListener lineReadListener) {
         helper.setLineReadListener(lineReadListener);
@@ -159,6 +178,15 @@ public class FileEventSourceListener extends AbstractSource implements
         eventsCapacity = context.getInteger(EVENTS_CAPACITY) == null ? 1000 : context.getInteger(EVENTS_CAPACITY);
         autocommittime = context.getInteger(AUTOCOMMIT_TIME) == null ? 10000 : context.getInteger(AUTOCOMMIT_TIME) * 1000;
         maxchars = context.getInteger(MAX_CHARS) == null ? 100000 : context.getInteger(MAX_CHARS);
+
+        //Multiline
+        multilineActive = context.getBoolean(MULTILINE_ACTIVE) == null ? false : context.getBoolean(MULTILINE_ACTIVE);
+        multilineRegex = context.getString(MULTILINE_REGEX);
+        multilineFirstLineRegex = context.getString(MULTILINE_FIRST_LINE_REGEX);
+        multilineNegateRegex = context.getBoolean(MULTILINE_NEGATE_REGEX) == null ? false : context.getBoolean(MULTILINE_NEGATE_REGEX);
+        multilineAssignToPreviousLine = context.getBoolean(MULTILINE_ASIGN_TO_PREVIOUS_LINE) == null ? true : context.getBoolean(MULTILINE_ASIGN_TO_PREVIOUS_LINE);
+        multilineFlushEntireBuffer = context.getBoolean(MULTILINE_FLUSH_ENTIRE_BUFFER) == null ? false : context.getBoolean(MULTILINE_FLUSH_ENTIRE_BUFFER);
+
 
         // Lanzamos el proceso de serializacion
         ser = new SerializeFilesThread(this, pathToSerialize, timeToSer);
