@@ -57,6 +57,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.regex.Pattern;
 
 import com.google.common.base.Preconditions;
 
@@ -129,6 +130,8 @@ public class FileEventSourceListener extends AbstractSource implements
     protected boolean multilineNegateRegex;
     protected boolean multilineAssignToPreviousLine;
     protected boolean multilineFlushEntireBuffer;
+    protected Pattern patternMultilineRegex;
+    protected Pattern patternMultilineFirstLineRegex;
 
 
 
@@ -186,6 +189,15 @@ public class FileEventSourceListener extends AbstractSource implements
         multilineNegateRegex = context.getBoolean(MULTILINE_NEGATE_REGEX) == null ? false : context.getBoolean(MULTILINE_NEGATE_REGEX);
         multilineAssignToPreviousLine = context.getBoolean(MULTILINE_ASIGN_TO_PREVIOUS_LINE) == null ? true : context.getBoolean(MULTILINE_ASIGN_TO_PREVIOUS_LINE);
         multilineFlushEntireBuffer = context.getBoolean(MULTILINE_FLUSH_ENTIRE_BUFFER) == null ? false : context.getBoolean(MULTILINE_FLUSH_ENTIRE_BUFFER);
+
+        //En caso de ser necesario compilamos los patterns de las expresiones regulares (general y de primera línea)
+        if ((multilineActive) && (multilineRegex != null) && (!"".equals(multilineRegex))) {
+            patternMultilineRegex = Pattern.compile(multilineRegex);
+        }
+        if ((patternMultilineRegex != null) && (multilineFirstLineRegex != null) && (!"".equals(multilineFirstLineRegex))) {
+            patternMultilineFirstLineRegex = Pattern.compile(multilineFirstLineRegex);
+        }
+
 
 
         // Lanzamos el proceso de serializacion

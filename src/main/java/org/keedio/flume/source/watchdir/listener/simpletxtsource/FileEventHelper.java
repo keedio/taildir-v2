@@ -29,11 +29,12 @@ public class FileEventHelper {
   private static final Logger LOGGER = LoggerFactory
       .getLogger(FileEventHelper.class);
 
-  private static final String FILEHEADERNAME_FAKE = "fileHeaderNameFake";
+  protected static final String FILEHEADERNAME_FAKE = "fileHeaderNameFake";
   private static final String LINE_FEED = "\n";
 
-  List<Integer> listIndexToRemove = new ArrayList<>();
-  Map<String, TreeMap<Integer,Event>> mapPendingEvents = new HashMap<String, TreeMap<Integer,Event>>();
+  private List<Integer> listIndexToRemove;
+  private Map<String, TreeMap<Integer,Event>> mapPendingEvents;
+  private List<Event> listEventToProcess;
 
 
   FileEventSourceListener listener;
@@ -167,38 +168,12 @@ public class FileEventHelper {
 
       Event ev = EventBuilder.withBody(line.getBytes());
 
+      //Obtenemos los headers para el evento
+      Map<String, String> headers = createEventHeaders(path);
 
-      if (listener.multilineActive) {
-
-          //2016-08-25 - Con motivo del tratamiento de la excepcion multilinea siempre introducimos cabeceras (sirven para saber a que fichero pertenece la linea)
-          //Serían eliminados en el tratamiento posterior
-
-          Map<String, String> headers = new HashMap<String, String>();
-          if (listener.fileHeader) {
-              headers.put(listener.fileHeaderName, path);
-          } else {
-              headers.put(FILEHEADERNAME_FAKE, path);
-          }
-          if (listener.baseHeader) {
-              headers.put(listener.baseHeaderName, new File(path).getName());
-          }
+      if (!headers.isEmpty()) {
           ev.setHeaders(headers);
-
-      } else {
-
-          // Put header props
-          Map<String, String> headers = new HashMap<String, String>();
-          if (listener.fileHeader)
-              headers.put(listener.fileHeaderName, path);
-          if (listener.baseHeader)
-              headers.put(listener.baseHeaderName, new File(path).getName());
-          if (!headers.isEmpty())
-              ev.setHeaders(headers);
       }
-
-
-
-
 
       getBuffer().add(ev);
 
@@ -238,13 +213,14 @@ public class FileEventHelper {
 
         List<Event> listEventsBuffer = getBuffer();
 
+        listIndexToRemove = new ArrayList<>();
+        mapPendingEvents = new HashMap<String, TreeMap<Integer,Event>>();
+        listEventToProcess = new Vector<Event>();
+
         //Obtenemos el tamanyo en este momento del buffer. Dicho tamanyo determinará hasta que elementos del mismo son procesados
         //independientemente de que otros procesos anyadan más eventos al mismo
         int bufferSize = listEventsBuffer.size();
 
-        List<Event> listEventToProcess = new Vector<Event>();
-        //List<Integer> listIndexToRemove = new ArrayList<>();
-        Map<String, TreeMap<Integer,Event>> mapPendingEvents = new HashMap<String, TreeMap<Integer,Event>>();
 
         //Recorremos los eventos que posea el buffer
         for (int index = 0; index < bufferSize; index ++) {
@@ -267,6 +243,8 @@ public class FileEventHelper {
                       }
 
                       listEventToProcess.add(joinedEvent);
+
+
                   }
 
 
@@ -305,8 +283,6 @@ public class FileEventHelper {
 
               }
 
-
-
             } else {
               //Se consideran que los eventos que no satisfacen la expresion son multilinea. Un evento que la satisface puede tener más lineas asociadas o no
 
@@ -328,12 +304,10 @@ public class FileEventHelper {
 
               }
 
-
               //Add el evento como pendiente para proceso.
               addEventPendingProcess(eventBuffer, index);
 
             }
-
 
         }
 
@@ -356,6 +330,9 @@ public class FileEventHelper {
 
                 listEventToProcess.addAll(listPendingEvents);
 
+                //Eliminamos los datos que ya han sido añadidos como eventos a enviar
+                clearMapPendingEvents();
+
             }
 
         }
@@ -364,7 +341,7 @@ public class FileEventHelper {
         //Procesamos la lista de eventos a evniar a Flume
         if (listEventToProcess.size() > 0) {
             listener.getChannelProcessor().processEventBatch(listEventToProcess);
-            listEventToProcess.clear();
+            clearListEventToProcess();
         }
 
         //Ordenamos los indices antes de su eliminación del buffer para garantizar un orden de borrado correcto
@@ -391,16 +368,24 @@ public class FileEventHelper {
      */
     private synchronized boolean isSimpleLineEvent(Event eventBuffer) {
 
-
-        Pattern patternRegex = Pattern.compile(listener.multilineRegex);
-
-         boolean isSimpleLineEvent = false;
+        boolean isSimpleLineEvent = false;
 
         //Obtenemos el String correspondiente al mensaje a partir dal array de bytes
         String message = new String(eventBuffer.getBody());
 
-        Matcher matcher = patternRegex.matcher(message);
-        isSimpleLineEvent = !matcher.find();
+
+
+        Matcher matcher = listener.patternMultilineRegex.matcher(message);
+        isSimpleLineEvent = !matcher.matches();
+
+        if (LOGGER.isDebugEnabled()) {
+            String fileHeaderName = getFileHeaderNameFromHeaders(eventBuffer);
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("El mensaje del evento [").append(message).append("] procedente del fichero [").append(fileHeaderName).append("] match multilineRegex [").append(listener.patternMultilineRegex).append("] --> ").append(!isSimpleLineEvent);
+            LOGGER.debug(sb.toString());
+        }
+
 
         //En el caso de que negate sea true, consideramos eventos de linea simple aquellos que matchean contra la expresión regular (aunque luego existan más líneas
         //pertenecientes al evento
@@ -423,15 +408,24 @@ public class FileEventHelper {
         boolean isMultilineFirstLineEvent = false;
 
         //Solo tendremos en cuenta la detección de la primera linea de excepción si se define en las propiedades.
-        if ((listener.multilineFirstLineRegex != null) && (!"".equals(listener.multilineFirstLineRegex))) {
-            Pattern patternFirstLineRegex = Pattern.compile(listener.multilineFirstLineRegex);
+        if (listener.patternMultilineFirstLineRegex != null) {
 
             //Obtenemos el String correspondiente al mensaje a partir dal array de bytes
             String message = new String(eventBuffer.getBody());
 
-            Matcher matcher = patternFirstLineRegex.matcher(message);
+            Matcher matcher = listener.patternMultilineFirstLineRegex.matcher(message);
 
-            isMultilineFirstLineEvent = matcher.find();
+            isMultilineFirstLineEvent = matcher.matches();
+
+            if (LOGGER.isDebugEnabled()) {
+                String fileHeaderName = getFileHeaderNameFromHeaders(eventBuffer);
+
+                StringBuilder sb = new StringBuilder();
+                sb.append("El mensaje del evento [").append(message).append("] procedente del fichero [").append(fileHeaderName).append("] match multilineFirstLineRegex [").append(listener.patternMultilineFirstLineRegex).append("] --> ").append(isMultilineFirstLineEvent);
+                LOGGER.debug(sb.toString());
+            }
+
+
         }
 
         return isMultilineFirstLineEvent;
@@ -452,17 +446,9 @@ public class FileEventHelper {
         if (eventBuffer != null) {
 
             //Obtenemos el fichero al que pertenece el evento a partir de la header (sea ficticia o no)
-            Map<String, String> headersEventBuffer = eventBuffer.getHeaders();
+            String fileHeaderName = getFileHeaderNameFromHeaders(eventBuffer);
 
-            if ((headersEventBuffer != null) && (!headersEventBuffer.isEmpty())) {
-                //Obtenemos la cabecera del evento donde nos indica al fichero al que pertenece
-                String fileHeaderName;
-
-                if (listener.fileHeader) {
-                    fileHeaderName = headersEventBuffer.get(listener.fileHeaderName);
-                } else {
-                    fileHeaderName = headersEventBuffer.get(FILEHEADERNAME_FAKE);
-                }
+            if ((fileHeaderName != null) && (!"".equals(fileHeaderName))) {
 
                 //Obtenemos el Map de los eventos pendientes del fichero al que pertenece el evento
                 if (mapPendingEvents.containsKey(fileHeaderName)) {
@@ -475,11 +461,9 @@ public class FileEventHelper {
                     boolean getHeaderEvent = true;
                     Map<String, String> headersJoinedEvent = null;
 
-
                     //Recorremos el map generando el contenido del evento a devolver
 
                     for (Integer indexKey : treeMapPendingEventsFile.keySet()) {
-
 
                         Event partialEvent = treeMapPendingEventsFile.get(indexKey);
 
@@ -492,7 +476,6 @@ public class FileEventHelper {
                         if (getHeaderEvent) {
                             headersJoinedEvent = partialEvent.getHeaders();
 
-
                             if (listener.multilineAssignToPreviousLine) {
                                 //Garantizamos que las cabeceras que se asignan son las del primer evento
                                 getHeaderEvent = false;
@@ -503,20 +486,24 @@ public class FileEventHelper {
                         listIndexToRemove.add(indexKey);
                     }
 
-
+                    //Eliminamos el ultimo salto de linea
+                    if (sb.length() > 0) {
+                        sb.setLength(sb.length() - 1);
+                    }
                     //Tenemos las cabeceras del primer (o del ultimo evento) y el StringBuilder con el contenido de todos los eventos pendientes
                     joinedEvent = EventBuilder.withBody(sb.toString().getBytes());
                     joinedEvent.setHeaders(headersJoinedEvent);
 
+                    //Eliminamos los eventos pendientes
+                    mapPendingEvents.remove(fileHeaderName);
 
                 }
 
             } else {
-                LOGGER.error("Evento sin cabeceras en getEventListToProcess()");
+                LOGGER.error("Evento sin cabecera fileHeaderName getEventListToProcess()");
             }
 
         }
-
 
         //Devolvemos el evento creado
         return joinedEvent;
@@ -538,10 +525,10 @@ public class FileEventHelper {
         for (String fileHeaderName : mapPendingEvents.keySet()) {
 
             Event joinedEvent = null;
+            sb.setLength(0);
 
             //Obtenemos el arbol de eventos correspondientes al fichero
             TreeMap<Integer, Event> treeMapPendingEventsFile = mapPendingEvents.get(fileHeaderName);
-
 
             //En funcion de a que evento se asignara el contenido total de los eventos nos quedaremos con las cabeceras del evento adecuado
             //(bien las del primer evento de la cadena, bien las del último)
@@ -549,11 +536,9 @@ public class FileEventHelper {
             boolean getHeaderEvent = true;
             Map<String, String> headersJoinedEvent = null;
 
-
             //Recorremos el map generando el contenido del evento a devolver
 
             for (Integer indexKey : treeMapPendingEventsFile.keySet()) {
-
 
                 Event partialEvent = treeMapPendingEventsFile.get(indexKey);
 
@@ -566,7 +551,6 @@ public class FileEventHelper {
                 if (getHeaderEvent) {
                     headersJoinedEvent = partialEvent.getHeaders();
 
-
                     if (listener.multilineAssignToPreviousLine) {
                         //Garantizamos que las cabeceras que se asignan son las del primer evento
                         getHeaderEvent = false;
@@ -577,7 +561,10 @@ public class FileEventHelper {
                 listIndexToRemove.add(indexKey);
             }
 
-
+            //Eliminamos el ultimo salto de linea
+            if (sb.length() > 0) {
+                sb.setLength(sb.length() - 1);
+            }
             //Tenemos las cabeceras del primer (o del ultimo evento) y el StringBuilder con el contenido de todos los eventos pendientes
             joinedEvent = EventBuilder.withBody(sb.toString().getBytes());
             joinedEvent.setHeaders(headersJoinedEvent);
@@ -601,12 +588,59 @@ public class FileEventHelper {
 
         if (eventBuffer != null) {
 
+
+            //Obtenemos el fichero al que pertenece el evento a partir de la header (sea ficticia o no)
+            String fileHeaderName = getFileHeaderNameFromHeaders(eventBuffer);
+
+            //Obtenemos el Map de los eventos pendientes del fichero al que pertenece el evento
+            if (mapPendingEvents.containsKey(fileHeaderName)) {
+
+                TreeMap<Integer, Event> treeMapPendingEventsFile = mapPendingEvents.get(fileHeaderName);
+
+                //Add el evento como evento pendiente
+                treeMapPendingEventsFile.put(index, eventBuffer);
+
+            } else {
+                //No existen eventos pendientes para dicho fichero.Creamos el map con los eventos pendientes y le anyadimos el evento
+                TreeMap<Integer, Event> treeMapPendingEventsFile = new TreeMap<>();
+                treeMapPendingEventsFile.put(index, eventBuffer);
+
+                mapPendingEvents.put(fileHeaderName, treeMapPendingEventsFile);
+            }
+
+        }
+    }
+
+    /**
+     * Elimina los datos de la lista de eventos para procesar
+     */
+    private synchronized  void clearListEventToProcess() {
+        listEventToProcess.clear();
+    }
+
+    /**
+     * Elimina los datos del map de eventos pendientes de enviar
+     */
+    protected synchronized  void clearMapPendingEvents() {
+        mapPendingEvents.clear();
+    }
+
+
+    /**
+     * Devuelve el nombre del fichero al que pertenece el evento a partir de los datos de las cabeceras del mismo
+     * @param eventBuffer Event del que se obtiene los datos
+     * @return String con el nombre del fichero al que pertenece el evento
+     */
+    private synchronized String getFileHeaderNameFromHeaders(Event eventBuffer) {
+
+        String fileHeaderName = null;
+
+        if (eventBuffer != null) {
+
             //Obtenemos el fichero al que pertenece el evento a partir de la header (sea ficticia o no)
             Map<String, String> headersEventBuffer = eventBuffer.getHeaders();
 
             if ((headersEventBuffer != null) && (!headersEventBuffer.isEmpty())) {
-                //Obtenemos la cabecera del evento donde nos indica al fichero al que pertenece
-                String fileHeaderName;
 
                 if (listener.fileHeader) {
                     fileHeaderName = headersEventBuffer.get(listener.fileHeaderName);
@@ -614,25 +648,49 @@ public class FileEventHelper {
                     fileHeaderName = headersEventBuffer.get(FILEHEADERNAME_FAKE);
                 }
 
-                //Obtenemos el Map de los eventos pendientes del fichero al que pertenece el evento
-                if (mapPendingEvents.containsKey(fileHeaderName)) {
+            }
+        }
 
-                    TreeMap<Integer, Event> treeMapPendingEventsFile = mapPendingEvents.get(fileHeaderName);
+        return fileHeaderName;
+    }
 
-                    //Add el evento como evento pendiente
-                    treeMapPendingEventsFile.put(index, eventBuffer);
+    /**
+     * Crea los headers del evento a partir del path en función de las variables de configuracion existentes
+     * @param path String con el path
+     * @return Map con los headers creados para el evento
+     */
+    private Map<String, String> createEventHeaders(String path) {
 
-                } else {
-                    //No existen eventos pendientes para dicho fichero.Creamos el map con los eventos pendientes y le anyadimos el evento
-                    TreeMap<Integer, Event> treeMapPendingEventsFile = new TreeMap<>();
-                    treeMapPendingEventsFile.put(index, eventBuffer);
+        Map<String, String> headers = new HashMap<String, String>();
 
-                    mapPendingEvents.put(fileHeaderName, treeMapPendingEventsFile);
-                }
+        if (listener.multilineActive) {
 
+            //2016-08-25 - Con motivo del tratamiento de la excepcion multilinea siempre introducimos cabeceras (sirven para saber a que fichero pertenece la linea)
+            //Serían eliminados en el tratamiento posterior
+
+            if (listener.fileHeader) {
+                headers.put(listener.fileHeaderName, path);
+            } else {
+                headers.put(FILEHEADERNAME_FAKE, path);
+            }
+            if (listener.baseHeader) {
+                headers.put(listener.baseHeaderName, new File(path).getName());
             }
 
+
+        } else {
+
+            // Put header props
+            if (listener.fileHeader) {
+                headers.put(listener.fileHeaderName, path);
+            }
+            if (listener.baseHeader) {
+                headers.put(listener.baseHeaderName, new File(path).getName());
+            }
         }
+
+        return headers;
     }
+
 
 }
