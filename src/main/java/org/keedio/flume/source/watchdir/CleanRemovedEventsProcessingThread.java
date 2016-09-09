@@ -80,13 +80,19 @@ public class CleanRemovedEventsProcessingThread implements Runnable {
                     if (!file.exists()) {
                         LOGGER.info("Removing inodekey '" + inodeKey + "' associated with file '" + file.getAbsolutePath() + "'");
                         iter.remove();
-                    }
+                    } else {
 
-                    String inodeNumber = Util.getInodeID(inode.getFileName());
-
-                    if (inodeNumber != null && !inodeNumber.equals(inodeKey)){
-                        LOGGER.info("Removing inodekey '"+inodeKey+"', inodeNumber '" + inodeNumber+ "' does not match inode number for observed file '" + file.getAbsolutePath() + "'");
-                        iter.remove();
+                        String inodeNumber = null;
+                        try {
+                            inodeNumber = Util.getInodeID(inode.getFileName());
+                            if (inodeNumber != null && !inodeNumber.equals(inodeKey)) {
+                                LOGGER.info("Removing inodekey '" + inodeKey + "', inodeNumber '" + inodeNumber + "' does not match inode number for observed file '" + file.getAbsolutePath() + "'");
+                                iter.remove();
+                            }
+                        } catch (WatchDirException e) {
+                            // ignore exception
+                        }
+                        
                     }
 
                 } catch (Exception e) {

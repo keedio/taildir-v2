@@ -74,9 +74,7 @@ public class FileEventHelper {
         LOGGER.warn("File '" + file + "' associated with inode '"+inode+"' does not exists and cannot be processed.");
       }
     } catch (Exception e) {
-      LOGGER.error("Error procesando el fichero: " + path);
-      LOGGER.error(e.getMessage());
-      e.printStackTrace();
+      LOGGER.error("Error procesando el fichero: " + path, e);
     }
   }
 
@@ -103,7 +101,7 @@ public class FileEventHelper {
     }
   }
 
-  private void readLines(String inode) throws Exception {
+  private void  readLines(String inode) throws Exception {
 
     LOGGER.debug("ENTRAMOS EN EL HELPER......");
     //
