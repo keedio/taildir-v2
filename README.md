@@ -71,6 +71,39 @@ Edit flume configuration file with the parameters above.
 |autocommittime|10|Number of seconds until channel injection|
 |maxcharsonmessage|100000|Max characters for messages events, if greater then message is discarded|
 
+
+##Configuration for multiline events files
+| Property Name | Default | Description |
+| ------------- | :-----: | :---------- |
+| Channels | - |  |
+| Type | - | org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventSourceListener |
+| dirs.1.dir | - | directory to be monitorized (only one) |
+| dirs.1.whitelist | - | regex pattern indicating whitelist files to be monitorized (ex. \\.xml) |
+| dirs.1.blacklist | - | regex pattern indicating blacklist files to be excluded (ex. \\.xml) |
+| dirs.2.dir | - | second directory configuration... |
+| dirs.2.whitelist | - | ... |
+| dirs.2.blacklist | - | ... |
+| whitelist | - | regex pattern indicating whitelist files to be monitorized (ex. \\.xml). If it is set it will rewrite the directory one |
+| blacklist | - | regex pattern indicating blacklist files to be excluded (ex. \\.xml). If it is set it will rewrite the directory one |
+|readonstartup|false|Used in order to indicate if the agent have to proccess files existing in the directory on startup|
+|pathtoser|true|The .ser file used by the recovery mecanism|
+|timetoser|true|Time to generate ser file used by the recovery mecanism|
+|followlinks|false|Follow symbolic links to directories referenced in monitorized directories
+|fileHeader|false|Include file absolute path in events header
+|fileHeaderKey||Key of file absolute path header
+|basenameHeader|false|Include file base name in events header
+|basenameHeaderKey||Key of file base name header
+|eventsCapacity|1000|Number of events until channel injection|
+|autocommittime|10|Number of seconds until channel injection|
+|maxcharsonmessage|100000|Max characters for messages events, if greater then message is discarded|
+|multilineActive|false|Enable multiline events funcionality|
+|multilineRegex| - |Regex pattern indicating when a event is a multiline event|
+|multilineFirstLineRegex| - |Regex pattern indicating when a event is a first line of a multiline event|
+|multilineNegateRegex|false|If true, a message not matching the pattern will constitute a match of a multiline event|
+|multilineAssignToPreviousLine|true|Indicates the relation to the multi-line event. If true the headers of the first event will be the headers of the multiline event. Otherwise will be the headers of the last event|
+|multilineFlushEntireBuffer|false|If true the pending multiline events are sent at the end of buffer processing (The entire buffer is processed)|
+
+
 * Example
 
 ```
