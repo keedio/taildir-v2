@@ -20,11 +20,8 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyList;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.*;
 
 import org.apache.log4j.Logger;
@@ -46,9 +43,9 @@ public class FileEventHelperTest {
 
     private static final String FILE_HEADER_NAME = "fileHeaderName";
     private static final String FILE_HEADER_NAME_FAKE = "fileHeaderNameFake";
-    private static final String FILE_HEAVER_VALUE_FILE01 = "/path/File01.log";
-    private static final String FILE_HEAVER_VALUE_FILE02 = "/path/File02.log";
-    private static final String FILE_HEAVER_VALUE_FILE03 = "/path/File03.log";
+    private static final String FILE_HEADER_VALUE_FILE01 = "/path/File01.log";
+    private static final String FILE_HEADER_VALUE_FILE02 = "/path/File02.log";
+    private static final String FILE_HEADER_VALUE_FILE03 = "/path/File03.log";
     private static final String MESSAGE_SIMPLE_EVENT = "Mensaje evento simple";
 
 
@@ -307,7 +304,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -366,7 +363,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader ficticio
             boolean fileHeader = false;
             String fileHeaderName = FILE_HEADER_NAME_FAKE;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -429,7 +426,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
 
             try {
                 int a = 1 / 0;
@@ -492,7 +489,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
 
             try {
                 int a = 1 / 0;
@@ -554,7 +551,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader ficticio
             boolean fileHeader = false;
             String fileHeaderName = FILE_HEADER_NAME_FAKE;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
 
             try {
                 int a = 1 / 0;
@@ -620,7 +617,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -689,7 +686,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -755,7 +752,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -827,7 +824,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -899,7 +896,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -982,7 +979,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -1063,7 +1060,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -1147,7 +1144,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -1231,7 +1228,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -1315,7 +1312,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -1402,7 +1399,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -1410,7 +1407,7 @@ public class FileEventHelperTest {
             bufferTest.add(event);
 
             //Creamos otro evento simple asignado al fichero "File02". Con fileHeader rea
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
 
             Event anotherEvent = createEvent(fileHeader, fileHeaderName, fileHeaderValue, message);
             bufferTest.add(anotherEvent);
@@ -1439,10 +1436,10 @@ public class FileEventHelperTest {
             Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", listEventToProcessAfterProcess.size(), 2);
             //El primer evento corresponde al evento del primer fichero
             Event firstEvent = listEventToProcessAfterProcess.get(0);
-            Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", firstEvent.getHeaders().get(fileHeaderName), FILE_HEAVER_VALUE_FILE01);
+            Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", firstEvent.getHeaders().get(fileHeaderName), FILE_HEADER_VALUE_FILE01);
             //El segundo evento corresponde al evento del segundo fichero
             Event secondEvent = listEventToProcessAfterProcess.get(1);
-            Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", secondEvent.getHeaders().get(fileHeaderName), FILE_HEAVER_VALUE_FILE02);
+            Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", secondEvent.getHeaders().get(fileHeaderName), FILE_HEADER_VALUE_FILE02);
             //El buffer no contiene ningun elemento por enviar
             Assert.assertEquals("The value of bufferAfterProcess is not correct", bufferAfterProcess.size(), 0);
 
@@ -1475,7 +1472,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
 
             try {
                 int a = 1 / 0;
@@ -1487,7 +1484,7 @@ public class FileEventHelperTest {
 
 
             //Creamos una lista de eventos a partir del stack trace de otra excepcion. Asignamos estos eventos al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             try {
                 String nullString = null;
                 nullString.toString();
@@ -1517,10 +1514,10 @@ public class FileEventHelperTest {
             Assert.assertEquals("The value of listIndexToRemove is not correct", listIndexToRemoveAfterProcess.size(), 0);
             //El map contiene 2 elemento con los eventos no enviados del file01 y del file02
             Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.size(), 2);
-            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE01));
-            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE01).size(), firstFileExceptionEventsSize);
-            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE02));
-            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE02).size(), secondFileExceptionEventsSize);
+            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE01));
+            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE01).size(), firstFileExceptionEventsSize);
+            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE02));
+            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE02).size(), secondFileExceptionEventsSize);
             //No se ha enviado ningún evento (todos quedan pendientes)
             Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", listEventToProcessAfterProcess.size(), 0);
             //El buffer no ha sido modificado
@@ -1558,7 +1555,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
 
             try {
                 int a = 1 / 0;
@@ -1567,7 +1564,7 @@ public class FileEventHelperTest {
             }
 
             //Creamos una lista de eventos a partir del stack trace de otra excepcion. Asignamos estos eventos al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             try {
                 String nullString = null;
                 nullString.toString();
@@ -1599,10 +1596,10 @@ public class FileEventHelperTest {
             Assert.assertEquals("The value of listIndexToRemove is not correct", listIndexToRemoveAfterProcess.size(), 0);
             //El map contiene 2 elemento con los eventos no enviados del file01 y del file02
             Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.size(), 2);
-            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE01));
-            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE01).size(), firstFileExceptionEventsSize);
-            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE02));
-            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE02).size(), secondFileExceptionEventsSize);
+            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE01));
+            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE01).size(), firstFileExceptionEventsSize);
+            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE02));
+            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE02).size(), secondFileExceptionEventsSize);
             //No se ha enviado ningún evento (todos quedan pendientes)
             Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", listEventToProcessAfterProcess.size(), 0);
             //El buffer no ha sido modificado
@@ -1638,7 +1635,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
 
             try {
                 int a = 1 / 0;
@@ -1650,7 +1647,7 @@ public class FileEventHelperTest {
 
 
             //Creamos una lista de eventos a partir del stack trace de otra excepcion. Asignamos estos eventos al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             try {
                 String nullString = null;
                 nullString.toString();
@@ -1681,9 +1678,9 @@ public class FileEventHelperTest {
             //Se han procesado 2 eventos (1 por cada fichero)
             Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", listEventToProcessAfterProcess.size(), 2);
             //El primer elemento de la lista corresponde al evento compuesto creado por los eventos de excepcion del primer fichero
-            Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", listEventToProcessAfterProcess.get(0).getHeaders().get(fileHeaderName), FILE_HEAVER_VALUE_FILE01);
+            Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", listEventToProcessAfterProcess.get(0).getHeaders().get(fileHeaderName), FILE_HEADER_VALUE_FILE01);
             //El segundo elemento de la lista corresponde al evento compuesto creado por los eventos de excepcion del segundo fichero
-            Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", listEventToProcessAfterProcess.get(1).getHeaders().get(fileHeaderName), FILE_HEAVER_VALUE_FILE02);
+            Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", listEventToProcessAfterProcess.get(1).getHeaders().get(fileHeaderName), FILE_HEADER_VALUE_FILE02);
             //Del buffer se han eliminado todos los elementos
             Assert.assertEquals("The value of bufferAfterProcess is not correct", bufferAfterProcess.size(), 0);
 
@@ -1718,7 +1715,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
 
             try {
                 int a = 1 / 0;
@@ -1727,7 +1724,7 @@ public class FileEventHelperTest {
             }
 
             //Creamos una lista de eventos a partir del stack trace de otra excepcion. Asignamos estos eventos al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             try {
                 String nullString = null;
                 nullString.toString();
@@ -1761,7 +1758,7 @@ public class FileEventHelperTest {
             //Dependiendo del riffling efectuado los eventos pertenecientes a cada fichero iran antes o despues.
             for (Event eventToProcess : listEventToProcessAfterProcess) {
                 String fileHeaderNameValue = eventToProcess.getHeaders().get(fileHeaderName);
-                Assert.assertTrue("The value of listEventToProcessAfterProcess is not correct", fileHeaderNameValue.equals(FILE_HEAVER_VALUE_FILE01) | fileHeaderNameValue.equals(FILE_HEAVER_VALUE_FILE02));
+                Assert.assertTrue("The value of listEventToProcessAfterProcess is not correct", fileHeaderNameValue.equals(FILE_HEADER_VALUE_FILE01) | fileHeaderNameValue.equals(FILE_HEADER_VALUE_FILE02));
             }
             //Del buffer se han eliminado todos los elementos
             Assert.assertEquals("The value of bufferAfterProcess is not correct", bufferAfterProcess.size(), 0);
@@ -1795,14 +1792,14 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             Event event = createEvent(fileHeader, fileHeaderName, fileHeaderValue, message);
             bufferTest.add(event);
 
             //Creamos un evento simple para el segundo fichero
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             Event anotherevent = createEvent(fileHeader, fileHeaderName, fileHeaderValue, message);
             bufferTest.add(anotherevent);
 
@@ -1835,16 +1832,16 @@ public class FileEventHelperTest {
             Assert.assertEquals("The value of listIndexToRemove is not correct", listIndexToRemoveAfterProcess.size(), 2);
             //El map contiene 1 elemento con los eventos no enviados del file02
             Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.size(), 1);
-            Assert.assertNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE01));
-            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE02));
-            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE02).size(), secondFileExceptionEventsSize);
+            Assert.assertNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE01));
+            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE02));
+            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE02).size(), secondFileExceptionEventsSize);
             //Se han enviado los eventos simples
             Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", listEventToProcessAfterProcess.size(), 2);
             //En el buffer permanecen los eventos pendientes del file02
             Assert.assertEquals("The value of bufferAfterProcess is not correct", bufferAfterProcess.size(), secondFileExceptionEventsSize);
             for (Event bufferEvent : bufferAfterProcess) {
                 String fileHeaderNameValue = bufferEvent.getHeaders().get(fileHeaderName);
-                Assert.assertEquals("The value of bufferAfterProcess is not correct", fileHeaderNameValue, FILE_HEAVER_VALUE_FILE02);
+                Assert.assertEquals("The value of bufferAfterProcess is not correct", fileHeaderNameValue, FILE_HEADER_VALUE_FILE02);
             }
 
             //El metodo privado processAllpendingEvents NO se ha ejecutado (No Flush)
@@ -1876,14 +1873,14 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             Event event = createEvent(fileHeader, fileHeaderName, fileHeaderValue, message);
             bufferTest.add(event);
 
             //Creamos un evento simple para el segundo fichero
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             Event anotherevent = createEvent(fileHeader, fileHeaderName, fileHeaderValue, message);
             bufferTest.add(anotherevent);
 
@@ -1952,14 +1949,14 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             Event event = createEvent(fileHeader, fileHeaderName, fileHeaderValue, message);
             listEventsFirstFile.add(event);
 
             //Creamos un evento simple para el segundo fichero "File02"
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             Event anotherevent = createEvent(fileHeader, fileHeaderName, fileHeaderValue, message);
             listEventsSecondFile.add(anotherevent);
 
@@ -1996,16 +1993,16 @@ public class FileEventHelperTest {
             Assert.assertEquals("The value of listIndexToRemove is not correct", listIndexToRemoveAfterProcess.size(), 2);
             //El map contiene 1 elemento con los eventos no enviados del file02
             Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.size(), 1);
-            Assert.assertNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE01));
-            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE02));
-            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE02).size(), secondFileExceptionEventsSize);
+            Assert.assertNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE01));
+            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE02));
+            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE02).size(), secondFileExceptionEventsSize);
             //Se han enviado los eventos simples
             Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", listEventToProcessAfterProcess.size(), 2);
             //En el buffer permanecen los eventos pendientes del file02
             Assert.assertEquals("The value of bufferAfterProcess is not correct", bufferAfterProcess.size(), secondFileExceptionEventsSize);
             for (Event bufferEvent : bufferAfterProcess) {
                 String fileHeaderNameValue = bufferEvent.getHeaders().get(fileHeaderName);
-                Assert.assertEquals("The value of bufferAfterProcess is not correct", fileHeaderNameValue, FILE_HEAVER_VALUE_FILE02);
+                Assert.assertEquals("The value of bufferAfterProcess is not correct", fileHeaderNameValue, FILE_HEADER_VALUE_FILE02);
             }
 
             //El metodo privado processAllpendingEvents NO se ha ejecutado (No Flush)
@@ -2040,14 +2037,14 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             Event event = createEvent(fileHeader, fileHeaderName, fileHeaderValue, message);
             listEventsFirstFile.add(event);
 
             //Creamos un evento simple para el segundo fichero
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             Event anotherevent = createEvent(fileHeader, fileHeaderName, fileHeaderValue, message);
             listEventsSecondFile.add(anotherevent);
 
@@ -2117,7 +2114,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
 
 
             try {
@@ -2130,7 +2127,7 @@ public class FileEventHelperTest {
 
 
             //Creamos una lista de eventos a partir del stack trace de una excepcion. Asignamos estos eventos al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             try {
                 String nullString = null;
                 nullString.toString();
@@ -2165,16 +2162,16 @@ public class FileEventHelperTest {
             Assert.assertEquals("The value of listIndexToRemove is not correct", listIndexToRemoveAfterProcess.size(), secondFileExceptionEventsSize + 1);
             //El map contiene 1 elemento con los eventos no enviados del file01
             Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.size(), 1);
-            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE01));
-            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE01).size(), firstFileExceptionEventsSize);
-            Assert.assertNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE02));
+            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE01));
+            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE01).size(), firstFileExceptionEventsSize);
+            Assert.assertNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE02));
             //Se han enviado el evento compuesto del file02 + el evento simple del file02
             Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", listEventToProcessAfterProcess.size(), 2);
             //En el buffer permanecen los eventos pendientes del file01
             Assert.assertEquals("The value of bufferAfterProcess is not correct", bufferAfterProcess.size(), firstFileExceptionEventsSize);
             for (Event bufferEvent : bufferAfterProcess) {
                 String fileHeaderNameValue = bufferEvent.getHeaders().get(fileHeaderName);
-                Assert.assertEquals("The value of bufferAfterProcess is not correct", fileHeaderNameValue, FILE_HEAVER_VALUE_FILE01);
+                Assert.assertEquals("The value of bufferAfterProcess is not correct", fileHeaderNameValue, FILE_HEADER_VALUE_FILE01);
             }
 
             //El metodo privado processAllpendingEvents NO se ha ejecutado (No Flush)
@@ -2207,7 +2204,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
 
 
             try {
@@ -2220,7 +2217,7 @@ public class FileEventHelperTest {
 
 
             //Creamos una lista de eventos a partir del stack trace de una excepcion. Asignamos estos eventos al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             try {
                 String nullString = null;
                 nullString.toString();
@@ -2293,7 +2290,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
 
 
             try {
@@ -2306,7 +2303,7 @@ public class FileEventHelperTest {
 
 
             //Creamos una lista de eventos a partir del stack trace de una excepcion. Asignamos estos eventos al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             try {
                 String nullString = null;
                 nullString.toString();
@@ -2345,16 +2342,16 @@ public class FileEventHelperTest {
             Assert.assertEquals("The value of listIndexToRemove is not correct", listIndexToRemoveAfterProcess.size(), secondFileExceptionEventsSize + 1);
             //El map contiene 1 elemento con los eventos no enviados del file01
             Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.size(), 1);
-            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE01));
-            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE01).size(), firstFileExceptionEventsSize);
-            Assert.assertNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE02));
+            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE01));
+            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE01).size(), firstFileExceptionEventsSize);
+            Assert.assertNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE02));
             //Se han enviado el evento compuesto del file02 + el evento simple del file02
             Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", listEventToProcessAfterProcess.size(), 2);
             //En el buffer permanecen los eventos pendientes del file01
             Assert.assertEquals("The value of bufferAfterProcess is not correct", bufferAfterProcess.size(), firstFileExceptionEventsSize);
             for (Event bufferEvent : bufferAfterProcess) {
                 String fileHeaderNameValue = bufferEvent.getHeaders().get(fileHeaderName);
-                Assert.assertEquals("The value of bufferAfterProcess is not correct", fileHeaderNameValue, FILE_HEAVER_VALUE_FILE01);
+                Assert.assertEquals("The value of bufferAfterProcess is not correct", fileHeaderNameValue, FILE_HEADER_VALUE_FILE01);
             }
 
             //El metodo privado processAllpendingEvents NO se ha ejecutado (No Flush)
@@ -2390,7 +2387,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
 
 
             try {
@@ -2403,7 +2400,7 @@ public class FileEventHelperTest {
 
 
             //Creamos una lista de eventos a partir del stack trace de una excepcion. Asignamos estos eventos al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             try {
                 String nullString = null;
                 nullString.toString();
@@ -2478,7 +2475,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
 
 
             try {
@@ -2500,7 +2497,7 @@ public class FileEventHelperTest {
 
 
             //Creamos una lista de eventos a partir del stack trace de una excepcion. Asignamos estos eventos al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             try {
                 String nullString = null;
                 nullString.toString();
@@ -2536,16 +2533,16 @@ public class FileEventHelperTest {
             Assert.assertEquals("The value of listIndexToRemove is not correct", listIndexToRemoveAfterProcess.size(), firstFileFirstExceptionEventsSize + secondFileExceptionEventsSize + 1);
             //El map contiene 1 elemento con los eventos no enviados del file01 (los eventos de la segunda excepcion
             Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.size(), 1);
-            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE01));
-            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE01).size(), firstFileSecondExceptionEventsSize);
-            Assert.assertNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE02));
+            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE01));
+            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE01).size(), firstFileSecondExceptionEventsSize);
+            Assert.assertNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE02));
             //Se han enviado el evento compuesto de la primera excepcion (File01), el evento compuesto de la excepcion (File02) + el evento simple del File02
             Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", listEventToProcessAfterProcess.size(), 3);
             //En el buffer permanecen los eventos pendientes del file01 (corresponden a la segunda excepcion
             Assert.assertEquals("The value of bufferAfterProcess is not correct", bufferAfterProcess.size(), secondFileExceptionEventsSize);
             for (Event bufferEvent : bufferAfterProcess) {
                 String fileHeaderNameValue = bufferEvent.getHeaders().get(fileHeaderName);
-                Assert.assertEquals("The value of bufferAfterProcess is not correct", fileHeaderNameValue, FILE_HEAVER_VALUE_FILE01);
+                Assert.assertEquals("The value of bufferAfterProcess is not correct", fileHeaderNameValue, FILE_HEADER_VALUE_FILE01);
             }
 
             //El metodo privado processAllpendingEvents NO se ha ejecutado (No Flush)
@@ -2579,7 +2576,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
 
 
             try {
@@ -2601,7 +2598,7 @@ public class FileEventHelperTest {
 
 
             //Creamos una lista de eventos a partir del stack trace de una excepcion. Asignamos estos eventos al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             try {
                 String nullString = null;
                 nullString.toString();
@@ -2677,7 +2674,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
 
 
             try {
@@ -2699,7 +2696,7 @@ public class FileEventHelperTest {
 
 
             //Creamos una lista de eventos a partir del stack trace de una excepcion. Asignamos estos eventos al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             try {
                 String nullString = null;
                 nullString.toString();
@@ -2739,16 +2736,16 @@ public class FileEventHelperTest {
             Assert.assertEquals("The value of listIndexToRemove is not correct", listIndexToRemoveAfterProcess.size(), firstFileFirstExceptionEventsSize + secondFileExceptionEventsSize + 1);
             //El map contiene 1 elemento con los eventos no enviados del file01 (los eventos de la segunda excepcion
             Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.size(), 1);
-            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE01));
-            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE01).size(), firstFileSecondExceptionEventsSize);
-            Assert.assertNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE02));
+            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE01));
+            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE01).size(), firstFileSecondExceptionEventsSize);
+            Assert.assertNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE02));
             //Se han enviado el evento compuesto de la primera excepcion (File01), el evento compuesto de la excepcion (File02) + el evento simple del File02
             Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", listEventToProcessAfterProcess.size(), 3);
             //En el buffer permanecen los eventos pendientes del file01 (corresponden a la segunda excepcion
             Assert.assertEquals("The value of bufferAfterProcess is not correct", bufferAfterProcess.size(), secondFileExceptionEventsSize);
             for (Event bufferEvent : bufferAfterProcess) {
                 String fileHeaderNameValue = bufferEvent.getHeaders().get(fileHeaderName);
-                Assert.assertEquals("The value of bufferAfterProcess is not correct", fileHeaderNameValue, FILE_HEAVER_VALUE_FILE01);
+                Assert.assertEquals("The value of bufferAfterProcess is not correct", fileHeaderNameValue, FILE_HEADER_VALUE_FILE01);
             }
 
             //El metodo privado processAllpendingEvents NO se ha ejecutado (No Flush)
@@ -2786,7 +2783,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
 
 
             try {
@@ -2808,7 +2805,7 @@ public class FileEventHelperTest {
 
 
             //Creamos una lista de eventos a partir del stack trace de una excepcion. Asignamos estos eventos al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             try {
                 String nullString = null;
                 nullString.toString();
@@ -2889,7 +2886,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
 
 
             try {
@@ -2911,7 +2908,7 @@ public class FileEventHelperTest {
 
 
             //Creamos una lista de eventos a partir del stack trace de una excepcion. Asignamos estos eventos al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             try {
                 String nullString = null;
                 nullString.toString();
@@ -2927,7 +2924,7 @@ public class FileEventHelperTest {
             listEventsSecondFile.add(anotherEvent);
 
             //Creamos un evento simple para el tercer fichero "File03"
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE03;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE03;
             message = MESSAGE_SIMPLE_EVENT + "File03";
             Event additionalEvent = createEvent(fileHeader, fileHeaderName, fileHeaderValue, message);
 
@@ -2960,17 +2957,17 @@ public class FileEventHelperTest {
             Assert.assertEquals("The value of listIndexToRemove is not correct", listIndexToRemoveAfterProcess.size(), firstFileFirstExceptionEventsSize + secondFileExceptionEventsSize + 2);
             //El map contiene 1 elemento con los eventos no enviados del file01 (los eventos de la segunda excepcion
             Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.size(), 1);
-            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE01));
-            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE01).size(), firstFileSecondExceptionEventsSize);
-            Assert.assertNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE02));
-            Assert.assertNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEAVER_VALUE_FILE03));
+            Assert.assertNotNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE01));
+            Assert.assertEquals("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE01).size(), firstFileSecondExceptionEventsSize);
+            Assert.assertNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE02));
+            Assert.assertNull("The value of mapPendingEventsAfterProcess is not correct", mapPendingEventsAfterProcess.get(FILE_HEADER_VALUE_FILE03));
             //Se han enviado el evento compuesto de la primera excepcion (File01), el evento compuesto de la excepcion (File02) + el evento simple de File02 + el evento simple de File03
             Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", listEventToProcessAfterProcess.size(), 4);
             //En el buffer permanecen los eventos pendientes del file01 (corresponden a la segunda excepcion
             Assert.assertEquals("The value of bufferAfterProcess is not correct", bufferAfterProcess.size(), secondFileExceptionEventsSize);
             for (Event bufferEvent : bufferAfterProcess) {
                 String fileHeaderNameValue = bufferEvent.getHeaders().get(fileHeaderName);
-                Assert.assertEquals("The value of bufferAfterProcess is not correct", fileHeaderNameValue, FILE_HEAVER_VALUE_FILE01);
+                Assert.assertEquals("The value of bufferAfterProcess is not correct", fileHeaderNameValue, FILE_HEADER_VALUE_FILE01);
             }
 
             //El metodo privado processAllpendingEvents NO se ha ejecutado (No Flush)
@@ -3009,7 +3006,7 @@ public class FileEventHelperTest {
             //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
 
 
             try {
@@ -3031,7 +3028,7 @@ public class FileEventHelperTest {
 
 
             //Creamos una lista de eventos a partir del stack trace de una excepcion. Asignamos estos eventos al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             try {
                 String nullString = null;
                 nullString.toString();
@@ -3043,7 +3040,7 @@ public class FileEventHelperTest {
 
 
             //Creamos un evento simple para el tercer fichero "File03"
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE03;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE03;
             String message = MESSAGE_SIMPLE_EVENT + "File03";
             Event additionalEvent = createEvent(fileHeader, fileHeaderName, fileHeaderValue, message);
 
@@ -3163,7 +3160,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -3222,7 +3219,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -3281,7 +3278,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -3339,7 +3336,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -3397,7 +3394,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -3457,7 +3454,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -3517,7 +3514,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -3577,7 +3574,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -3637,7 +3634,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
@@ -3706,14 +3703,14 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
             List<Event> listEvents = createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 1);
 
             //Creamos otro evento timestamp asignado al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
 
             //Add el evento timestamp
             listEvents.addAll(createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 1));
@@ -3771,14 +3768,14 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
             List<Event> listEvents = createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 1);
 
             //Creamos otro evento timestamp asignado al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
 
             //Add el evento timestamp
             listEvents.addAll(createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 1));
@@ -3836,14 +3833,14 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
             List<Event> listEvents = createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 10);
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
 
             //Add el evento timestamp + eventos no timestamp
             listEvents.addAll(createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 10));
@@ -3901,14 +3898,14 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT;
 
             //Creamos el buffer del test
             List<Event> listEvents = createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 10);
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
 
             //Add el evento timestamp + eventos no timestamp
             listEvents.addAll(createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 10));
@@ -3969,14 +3966,14 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT + " File01";
 
             //Creamos el buffer del test
             listEventsFirstFile = createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 10);
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             message = MESSAGE_SIMPLE_EVENT + " File02";
 
             //Add el evento timestamp + eventos no timestamp
@@ -4039,14 +4036,14 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT + " File01";
 
             //Creamos el buffer del test
             listEventsFirstFile = createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 10);
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             message = MESSAGE_SIMPLE_EVENT + " File02";
 
             //Add el evento timestamp + eventos no timestamp
@@ -4106,14 +4103,14 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT + " File01";
 
             //Creamos el buffer del test
             List<Event> listEvents = createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 10);
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             message = MESSAGE_SIMPLE_EVENT + " File02";
 
             //Add el evento timestamp
@@ -4172,14 +4169,14 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT + " File01";
 
             //Creamos el buffer del test
             List<Event> listEvents = createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 10);
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             message = MESSAGE_SIMPLE_EVENT + " File02";
 
             //Add el evento timestamp
@@ -4241,14 +4238,14 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT + " File01";
 
             //Creamos el buffer del test
             listEventsFirstFile = createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 10);
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             message = MESSAGE_SIMPLE_EVENT + " File02";
 
             //Add el evento timestamp
@@ -4311,14 +4308,14 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT + " File01";
 
             //Creamos el buffer del test
             listEventsFirstFile = createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 10);
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             message = MESSAGE_SIMPLE_EVENT + " File02";
 
             //Add el evento timestamp
@@ -4378,7 +4375,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT + " File01";
 
             //Creamos el buffer del test
@@ -4388,7 +4385,7 @@ public class FileEventHelperTest {
             listEvents.addAll(createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 1));
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             message = MESSAGE_SIMPLE_EVENT + " File02";
 
             //Add el evento timestamp
@@ -4447,7 +4444,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT + " File01";
 
             //Creamos el buffer del test
@@ -4457,7 +4454,7 @@ public class FileEventHelperTest {
             listEvents.addAll(createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 1));
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             message = MESSAGE_SIMPLE_EVENT + " File02";
 
             //Add el evento timestamp
@@ -4519,7 +4516,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT + " File01";
 
             //Creamos el buffer del test
@@ -4529,7 +4526,7 @@ public class FileEventHelperTest {
             listEventsFirstFile.addAll(createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 1));
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             message = MESSAGE_SIMPLE_EVENT + " File02";
 
             //Add el evento timestamp
@@ -4592,7 +4589,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT + " File01";
 
             //Creamos el buffer del test
@@ -4602,7 +4599,7 @@ public class FileEventHelperTest {
             listEventsFirstFile.addAll(createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 1));
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             message = MESSAGE_SIMPLE_EVENT + " File02";
 
             //Add el evento timestamp
@@ -4662,7 +4659,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT + " File01";
 
             //Creamos el buffer del test
@@ -4672,7 +4669,7 @@ public class FileEventHelperTest {
             listEvents.addAll(createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 1));
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             message = MESSAGE_SIMPLE_EVENT + " File02";
 
             //Add el evento timestamp
@@ -4731,7 +4728,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT + " File01";
 
             //Creamos el buffer del test
@@ -4741,7 +4738,7 @@ public class FileEventHelperTest {
             listEvents.addAll(createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 1));
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             message = MESSAGE_SIMPLE_EVENT + " File02";
 
             //Add el evento timestamp
@@ -4804,7 +4801,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT + " File01";
 
             //Creamos el buffer del test
@@ -4814,7 +4811,7 @@ public class FileEventHelperTest {
             listEventsFirstFile.addAll(createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 1));
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             message = MESSAGE_SIMPLE_EVENT + " File02";
 
             //Add el evento timestamp
@@ -4880,7 +4877,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT + " File01";
 
             //Creamos el buffer del test
@@ -4890,7 +4887,7 @@ public class FileEventHelperTest {
             listEventsFirstFile.addAll(createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 1));
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             message = MESSAGE_SIMPLE_EVENT + " File02";
 
             //Add el evento timestamp
@@ -4959,7 +4956,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT + " File01";
 
             //Creamos el buffer del test
@@ -4969,14 +4966,14 @@ public class FileEventHelperTest {
             listEventsFirstFile.addAll(createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 1));
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             message = MESSAGE_SIMPLE_EVENT + " File02";
 
             //Add el evento timestamp + n eventos no timestamp
             listEventsSecondFile = createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 4);
 
             //Creamos otros eventos asignados al fichero "File03". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE03;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE03;
             message = MESSAGE_SIMPLE_EVENT + " File03";
 
             //Add el evento timestamp
@@ -5046,7 +5043,7 @@ public class FileEventHelperTest {
             //Creamos un evento simple asignado al fichero "File01". Con fileHeader real
             boolean fileHeader = true;
             String fileHeaderName = FILE_HEADER_NAME;
-            String fileHeaderValue = FILE_HEAVER_VALUE_FILE01;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
             String message = MESSAGE_SIMPLE_EVENT + " File01";
 
             //Creamos el buffer del test
@@ -5056,14 +5053,14 @@ public class FileEventHelperTest {
             listEventsFirstFile.addAll(createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 1));
 
             //Creamos otros eventos asignados al fichero "File02". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE02;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE02;
             message = MESSAGE_SIMPLE_EVENT + " File02";
 
             //Add el evento timestamp + n eventos no timestamp
             listEventsSecondFile = createListEventsFirstTimestamp(fileHeader, fileHeaderName, fileHeaderValue, message, 4);
 
             //Creamos otros eventos asignados al fichero "File03". Con fileHeader real
-            fileHeaderValue = FILE_HEAVER_VALUE_FILE03;
+            fileHeaderValue = FILE_HEADER_VALUE_FILE03;
             message = MESSAGE_SIMPLE_EVENT + " File03";
 
             //Add el evento timestamp
@@ -5119,5 +5116,276 @@ public class FileEventHelperTest {
             Assert.fail();
         }
     }
+
+
+    @Test
+    public void testCommitPendingsMultilineActiveComplete() {
+
+        try {
+            Vector<Event> bufferTest = new Vector<Event>();
+            List<Event> listEventsExceptionFirstFileFirstException = null;
+
+            //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
+            boolean fileHeader = true;
+            String fileHeaderName = FILE_HEADER_NAME;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
+
+            try {
+                int a = 1 / 0;
+            } catch (Exception e) {
+                listEventsExceptionFirstFileFirstException = createListEventsFromThrowable(e, fileHeader, fileHeaderName, fileHeaderValue);
+            }
+
+            bufferTest.addAll(listEventsExceptionFirstFileFirstException);
+            int originalBufferTestSize = bufferTest.size();
+
+            //Preparamos los datos para invocar el metodo
+            prepareTestData(true, MULTILINE_REGEX, MULTILINE_FIRST_LINE_REGEX, false, true, false, fileHeader, fileHeaderName, bufferTest);
+
+            //Invocamos al metodo
+            spyHelper.commitPendings();
+
+            //El metodo privado processAllpendingEvents se ha ejecutado 1 vez
+            verifyPrivate(spyHelper, times(1)).invoke("processEventBatch");
+
+            //Comprobamos NO que se ha invocado el clear del buffer
+            Assert.assertTrue("The value of listEventToProcessAfterProcess is not correct", spyHelper.getBuffer().size() > 0);
+
+
+        } catch (Exception e) {
+            LOGGER.error("Ha ocurrido un error en el test testCommitPendingsMultilineActiveComplete", e);
+            Assert.fail();
+        }
+
+    }
+
+
+    @Test
+    public void testCommitPendingsMultilineNotActiveComplete() {
+
+        try {
+            Vector<Event> bufferTest = new Vector<Event>();
+            List<Event> listEventsExceptionFirstFileFirstException = null;
+
+            //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
+            boolean fileHeader = true;
+            String fileHeaderName = FILE_HEADER_NAME;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
+
+            try {
+                int a = 1 / 0;
+            } catch (Exception e) {
+                listEventsExceptionFirstFileFirstException = createListEventsFromThrowable(e, fileHeader, fileHeaderName, fileHeaderValue);
+            }
+
+            bufferTest.addAll(listEventsExceptionFirstFileFirstException);
+            int originalBufferTestSize = bufferTest.size();
+
+            //Preparamos los datos para invocar el metodo
+            prepareTestData(false, MULTILINE_REGEX, MULTILINE_FIRST_LINE_REGEX, false, true, false, fileHeader, fileHeaderName, bufferTest);
+
+            //Invocamos al metodo
+            spyHelper.commitPendings();
+
+            //El metodo privado processAllpendingEvents se ha ejecutado 1 vez
+            verifyPrivate(spyHelper, times(0)).invoke("processEventBatch");
+
+            //Comprobamos que se ha invocado el clear del buffer
+            Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", spyHelper.getBuffer().size(), 0);
+
+
+        } catch (Exception e) {
+            LOGGER.error("Ha ocurrido un error en el test testCommitPendingsMultilineNotActiveComplete", e);
+            Assert.fail();
+        }
+
+    }
+
+
+    @Test
+    public void testCommitPendingsExceptionThrown() {
+
+        try {
+            Vector<Event> bufferTest = new Vector<Event>();
+            List<Event> listEventsExceptionFirstFileFirstException = null;
+
+            //Creamos una lista de eventos a partir del stack trace de una excepción. Asignamos estos eventos al fichero "File01". Con fileHeader real
+            boolean fileHeader = true;
+            String fileHeaderName = FILE_HEADER_NAME;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
+
+            try {
+                int a = 1 / 0;
+            } catch (Exception e) {
+                listEventsExceptionFirstFileFirstException = createListEventsFromThrowable(e, fileHeader, fileHeaderName, fileHeaderValue);
+            }
+
+            bufferTest.addAll(listEventsExceptionFirstFileFirstException);
+            int originalBufferTestSize = bufferTest.size();
+
+            //Preparamos los datos para invocar el metodo
+            prepareTestData(true, MULTILINE_REGEX, MULTILINE_FIRST_LINE_REGEX, false, true, false, fileHeader, fileHeaderName, bufferTest);
+
+            //Garantizamos un error al invocar el metodo processEventBatch
+            Error error = new Error("error inesperado");
+            doThrow(error).when(spyHelper, "processEventBatch");
+
+            //Invocamos al metodo
+            spyHelper.commitPendings();
+
+            //Comprobamos que se ha invocado el clear del buffer
+            Assert.assertEquals("The value of listEventToProcessAfterProcess is not correct", spyHelper.getBuffer().size(), 0);
+
+
+        } catch (Exception e) {
+            LOGGER.error("Ha ocurrido un error en el test testCommitPendingsExceptionThrown", e);
+            Assert.fail();
+        }
+
+    }
+
+
+    @Test
+    public void testCreateEventHeadersMultilineActiveFileHeader() {
+
+        try {
+            boolean fileHeader = true;
+            String fileHeaderName = FILE_HEADER_NAME;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
+
+            //Preparamos los datos para invocar el metodo
+            prepareTestData(true, MULTILINE_REGEX, MULTILINE_FIRST_LINE_REGEX, false, true, false, fileHeader, fileHeaderName, null);
+
+            //Invocamos al metodo
+            Class<?>[] argsCreateEventHeaders = new Class[1];
+            argsCreateEventHeaders[0] = String.class;
+
+            Map<String,String> headers = (Map<String,String>) TestUtils.reflectExecuteMethod(spyHelper, "createEventHeaders", argsCreateEventHeaders, fileHeaderValue);
+
+            //El metodo privado processAllpendingEvents se ha ejecutado 1 vez
+            verifyPrivate(spyHelper, times(1)).invoke("createEventHeaders", anyString());
+
+            //Comprobamos que la cabecera fileHeaderName ha sido creada
+            Assert.assertNotNull("The value of headers is not correct", headers.get(fileHeaderName));
+
+            //Comprobamos que la cabecera fileHeaderName tiene el valor correcto
+            Assert.assertEquals("The value of headers is not correct", headers.get(fileHeaderName), fileHeaderValue);
+
+            //Comprobamos que la cabecera fake no ha sido creada
+            Assert.assertNull("The value of headers is not correct", headers.get(FILE_HEADER_NAME_FAKE));
+
+
+
+        } catch (Exception e) {
+            LOGGER.error("Ha ocurrido un error en el test testCreateEventHeadersMultilineActiveFileHeader", e);
+            Assert.fail();
+        }
+
+    }
+
+
+    @Test
+    public void testCreateEventHeadersMultilineActiveWithoutFileHeader() {
+
+        try {
+            boolean fileHeader = false;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
+
+            //Preparamos los datos para invocar el metodo
+            prepareTestData(true, MULTILINE_REGEX, MULTILINE_FIRST_LINE_REGEX, false, true, false, fileHeader, null, null);
+
+            //Invocamos al metodo
+            Class<?>[] argsCreateEventHeaders = new Class[1];
+            argsCreateEventHeaders[0] = String.class;
+
+            Map<String,String> headers = (Map<String,String>) TestUtils.reflectExecuteMethod(spyHelper, "createEventHeaders", argsCreateEventHeaders, fileHeaderValue);
+
+            //El metodo privado processAllpendingEvents se ha ejecutado 1 vez
+            verifyPrivate(spyHelper, times(1)).invoke("createEventHeaders", anyString());
+
+            //Comprobamos que la cabecera fake ha sido creada
+            Assert.assertNotNull("The value of headers is not correct", headers.get(FILE_HEADER_NAME_FAKE));
+
+            //Comprobamos que la cabecera fake tiene el valor correcto
+            Assert.assertEquals("The value of headers is not correct", headers.get(FILE_HEADER_NAME_FAKE), fileHeaderValue);
+
+
+        } catch (Exception e) {
+            LOGGER.error("Ha ocurrido un error en el test testCreateEventHeadersMultilineActiveWithoutFileHeader", e);
+            Assert.fail();
+        }
+
+    }
+
+
+    @Test
+    public void testCreateEventHeadersMultilineNotActiveFileHeader() {
+
+        try {
+            boolean fileHeader = true;
+            String fileHeaderName = FILE_HEADER_NAME;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
+
+            //Preparamos los datos para invocar el metodo
+            prepareTestData(false, MULTILINE_REGEX, MULTILINE_FIRST_LINE_REGEX, false, true, false, fileHeader, fileHeaderName, null);
+
+            //Invocamos al metodo
+            Class<?>[] argsCreateEventHeaders = new Class[1];
+            argsCreateEventHeaders[0] = String.class;
+
+            Map<String,String> headers = (Map<String,String>) TestUtils.reflectExecuteMethod(spyHelper, "createEventHeaders", argsCreateEventHeaders, fileHeaderValue);
+
+            //El metodo privado processAllpendingEvents se ha ejecutado 1 vez
+            verifyPrivate(spyHelper, times(1)).invoke("createEventHeaders", anyString());
+
+            //Comprobamos que la cabecera fileHeaderName ha sido creada
+            Assert.assertNotNull("The value of headers is not correct", headers.get(fileHeaderName));
+
+            //Comprobamos que la cabecera fileHeaderName tiene el valor correcto
+            Assert.assertEquals("The value of headers is not correct", headers.get(fileHeaderName), fileHeaderValue);
+
+            //Comprobamos que la cabecera fake no ha sido creada
+            Assert.assertNull("The value of headers is not correct", headers.get(FILE_HEADER_NAME_FAKE));
+
+
+
+        } catch (Exception e) {
+            LOGGER.error("Ha ocurrido un error en el test testCreateEventHeadersMultilineNotActiveFileHeader", e);
+            Assert.fail();
+        }
+
+    }
+
+
+    @Test
+    public void testCreateEventHeadersMultilineNotActiveWithoutFileHeader() {
+
+        try {
+            boolean fileHeader = false;
+            String fileHeaderValue = FILE_HEADER_VALUE_FILE01;
+
+            //Preparamos los datos para invocar el metodo
+            prepareTestData(false, MULTILINE_REGEX, MULTILINE_FIRST_LINE_REGEX, false, true, false, fileHeader, null, null);
+
+            //Invocamos al metodo
+            Class<?>[] argsCreateEventHeaders = new Class[1];
+            argsCreateEventHeaders[0] = String.class;
+
+            Map<String,String> headers = (Map<String,String>) TestUtils.reflectExecuteMethod(spyHelper, "createEventHeaders", argsCreateEventHeaders, fileHeaderValue);
+
+            //El metodo privado processAllpendingEvents se ha ejecutado 1 vez
+            verifyPrivate(spyHelper, times(1)).invoke("createEventHeaders", anyString());
+
+            //Comprobamos que la cabecera fake NO ha sido creada
+            Assert.assertNull("The value of headers is not correct", headers.get(FILE_HEADER_NAME_FAKE));
+
+
+        } catch (Exception e) {
+            LOGGER.error("Ha ocurrido un error en el test testCreateEventHeadersMultilineNotActiveWithoutFileHeader", e);
+            Assert.fail();
+        }
+
+    }
+
 
 }

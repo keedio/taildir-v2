@@ -77,6 +77,17 @@ public class TestUtils {
 
     }
 
+    public static Object reflectExecuteMethod(Object objToReflect, String methodNameToInvoke, Class<?>[] parameterTypes, Object... argsMethodInvoke) throws Exception {
+
+        Object result = null;
+
+        Method reflectMethod = reflectMethod(objToReflect.getClass(), methodNameToInvoke, parameterTypes);
+        result = reflectMethod.invoke(objToReflect, argsMethodInvoke);
+
+        return result;
+
+    }
+
 
     public static <T> LinkedList<T> riffleShuffleLists(List<T> list1, List<T> list2) {
 
