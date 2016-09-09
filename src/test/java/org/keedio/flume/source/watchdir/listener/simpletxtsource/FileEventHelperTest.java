@@ -29,6 +29,7 @@ import org.apache.log4j.Logger;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({org.apache.flume.channel.ChannelProcessor.class, org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventSourceListener.class,
         org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventHelper.class})
+@SuppressWarnings("all")
 public class FileEventHelperTest {
 
     private static final Logger LOGGER = Logger.getLogger(FileEventHelperTest.class);
@@ -49,8 +50,8 @@ public class FileEventHelperTest {
     private static final String MESSAGE_SIMPLE_EVENT = "Mensaje evento simple";
 
 
-    FileEventSourceListener mockListener;
-    FileEventHelper spyHelper;
+    private FileEventSourceListener mockListener;
+    private FileEventHelper spyHelper;
 
 
     /**
@@ -67,6 +68,7 @@ public class FileEventHelperTest {
      * @param bufferTest                    Vector con el conjunto de eventos a ser procesados
      * @throws Exception
      */
+    @SuppressWarnings("all")
     private void prepareTestData(boolean multilineActive, String multilineRegex, String multilineFirstLineRegex, boolean multilineNegateRegex,
                                  boolean multilineAssignToPreviousLine, boolean multilineFlushEntireBuffer,
                                  boolean fileHeader, String fileHeaderName, Vector<Event> bufferTest) throws Exception {
@@ -123,6 +125,7 @@ public class FileEventHelperTest {
      * @return Event con el evento creado
      * @throws Exception
      */
+    @SuppressWarnings("all")
     private Event createEvent(boolean fileHeader, String fileHeaderName, String fileHeaderValue, String message) throws Exception {
 
 
@@ -152,6 +155,7 @@ public class FileEventHelperTest {
      * @return Event con el evento creado
      * @throws Exception
      */
+    @SuppressWarnings("all")
     private Event createEventWithTimestamp(boolean fileHeader, String fileHeaderName, String fileHeaderValue, String message, boolean withTimestamp) throws Exception {
 
         Event event = null;
@@ -189,9 +193,10 @@ public class FileEventHelperTest {
      * @return List con los eventos creados
      * @throws Exception
      */
+    @SuppressWarnings("all")
     private List<Event> createListEventsFromThrowable(Throwable throwable, boolean fileHeader, String fileHeaderName, String fileHeaderValue) throws Exception {
 
-        List<Event> throwableEvents = new Vector<Event>();
+        List<Event> throwableEvents = new Vector<>();
 
         StringWriter sw = new StringWriter();
         throwable.printStackTrace(new PrintWriter(sw));
@@ -200,7 +205,7 @@ public class FileEventHelperTest {
         LOGGER.debug(stackTrace);
 
         BufferedReader br = new BufferedReader(new StringReader(stackTrace));
-        List<String> stackTraceLines = br.lines().map(s -> (String)s).collect(Collectors.toList());
+        List<String> stackTraceLines = br.lines().collect(Collectors.toList());
 
         for (String stackTraceLine : stackTraceLines) {
             Event eventStackTrace = createEvent(fileHeader, fileHeaderName, fileHeaderValue, stackTraceLine);
@@ -221,10 +226,11 @@ public class FileEventHelperTest {
      * @return List con los eventos creados
      * @throws Exception
      */
+    @SuppressWarnings("all")
     private List<Event> createListEventsFirstTimestamp(boolean fileHeader, String fileHeaderName, String fileHeaderValue, String message, int numEvents) throws Exception {
 
-        List<Event> listEvents = new Vector<Event>();
-        Event event = null;
+        List<Event> listEvents = new Vector<>();
+        Event event;
         if (numEvents > 0) {
 
             for (int i=0; i<numEvents; i++) {
@@ -248,6 +254,7 @@ public class FileEventHelperTest {
      *******************************/
 
     @Test
+    @SuppressWarnings("all")
     public void testEmptyBuffer() {
 
         try {
@@ -295,6 +302,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileOneSingleLineEvent() {
 
         try {
@@ -355,6 +363,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileOneSingleLineEventRemoveFakeHeader() {
 
         try {
@@ -417,6 +426,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileOneMultilineEventNoFlush() {
 
         try {
@@ -480,6 +490,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileOneMultilineEventFlush() {
 
         try {
@@ -542,6 +553,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileOneMultilineEventFlushFakeHeader() {
 
         try {
@@ -608,6 +620,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileSimplePlusMultilineEventNoFlush() {
 
         try {
@@ -677,6 +690,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileSimplePlusMultilineEventFlush() {
 
         try {
@@ -743,6 +757,7 @@ public class FileEventHelperTest {
     }
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileSimplePlusMultilinePlusSimpleEventNoFlush() {
 
         try {
@@ -815,6 +830,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileSimplePlusMultilinePlusSimpleEventFlush() {
 
         try {
@@ -886,6 +902,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileSimplePlusDoubleMultilineEventNoFlush() {
 
         try {
@@ -969,6 +986,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileSimplePlusDoubleMultilineEventFlush() {
 
         try {
@@ -1050,6 +1068,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileSimplePlusDoubleMultilinePlusSimpleEventNoFlush() {
 
         try {
@@ -1134,6 +1153,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileSimplePlusDoubleMultilinePlusSimpleEventFlush() {
 
         try {
@@ -1218,6 +1238,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileSimplePlusDoubleMultilinePlusSimpleEventNoFlushNoRegexFirstLine() {
 
         try {
@@ -1302,6 +1323,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileSimplePlusDoubleMultilinePlusSimpleEventFlushNoRegexFirstLine() {
 
         try {
@@ -1390,6 +1412,7 @@ public class FileEventHelperTest {
      ******************************/
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesOneSingleLineEvent() {
 
         try {
@@ -1462,6 +1485,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesOneMultilineEventNoFlush() {
 
         try {
@@ -1544,6 +1568,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesOneMultilineEventNoFlushRiffling() {
 
         try {
@@ -1625,6 +1650,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesOneMultilineEventFlush() {
 
         try {
@@ -1704,6 +1730,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesOneMultilineEventFlushRiffling() {
 
         try {
@@ -1783,6 +1810,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileSimpleSecondFileExceptionNoFlush() {
 
         try {
@@ -1864,6 +1892,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileSimpleSecondFileExceptionFlush() {
 
         try {
@@ -1937,6 +1966,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileSimpleSecondFileExceptionNoFlushRiffling() {
 
         try {
@@ -2025,6 +2055,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileSimpleSecondFileExceptionFlushRiffling() {
 
         try {
@@ -2104,6 +2135,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileExceptionSecondFileExceptionNoFlush() {
 
         try {
@@ -2194,6 +2226,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileExceptionSecondFileExceptionFlush() {
 
         try {
@@ -2277,6 +2310,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileExceptionSecondFileExceptionNoFlushRiffling() {
 
         try {
@@ -2374,6 +2408,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileExceptionSecondFileExceptionFlushRiffling() {
 
         try {
@@ -2464,6 +2499,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileDoubleExceptionSecondFileExceptionNoFlush() {
 
         try {
@@ -2565,6 +2601,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileDoubleExceptionSecondFileExceptionFlush() {
 
         try {
@@ -2659,6 +2696,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileDoubleExceptionSecondFileExceptionNoFlushRiffling() {
 
         try {
@@ -2768,6 +2806,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileDoubleExceptionSecondFileExceptionFlushRiffling() {
 
         try {
@@ -2870,6 +2909,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileDoubleExceptionSecondFileExceptionSimpleThirdFileSimpleEventNoFlushRiffling() {
 
         try {
@@ -2990,6 +3030,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileDoubleExceptionSecondFileExceptionThirdFileSimpleEventFlushRiffling() {
 
         try {
@@ -3103,6 +3144,7 @@ public class FileEventHelperTest {
      ********************************************/
 
     @Test
+    @SuppressWarnings("all")
     public void testEmptyBufferNegateRegex() {
 
         try {
@@ -3151,6 +3193,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileOneTimestampEventNegateRegexNoFlush() {
 
         try {
@@ -3210,6 +3253,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileOneTimestampEventNegateRegexFlush() {
 
         try {
@@ -3269,6 +3313,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileOneTimestampPlusNoTimestampEventNegateRegexNoFlush() {
 
         try {
@@ -3327,6 +3372,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileOneTimestampPlusNoTimestampEventNegateRegexFlush() {
 
         try {
@@ -3385,6 +3431,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileOneTimestampPlusTimestampEventNegateRegexNoFlush() {
 
         try {
@@ -3445,6 +3492,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileOneTimestampPlusTimestampEventNegateRegexFlush() {
 
         try {
@@ -3505,6 +3553,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileOneTimestampPlusNoTimestampPlusTimestampEventNegateRegexNoFlush() {
 
         try {
@@ -3565,6 +3614,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileOneTimestampPlusNoTimestampPlusTimestampEventNegateRegexFlush() {
 
         try {
@@ -3625,6 +3675,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testOneFileNoTimestampPlusOneTimestampEventNegateRegexNoFlush() {
 
         try {
@@ -3694,6 +3745,7 @@ public class FileEventHelperTest {
      *******************************************/
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesOneTimestampEventNoFlush() {
 
         try {
@@ -3759,6 +3811,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesOneTimestampEventFlush() {
 
         try {
@@ -3824,6 +3877,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesOneTimestampPlusNoTimestampEventNoFlush() {
 
         try {
@@ -3889,6 +3943,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesOneTimestampPlusNoTimestampEventFlush() {
 
         try {
@@ -3954,6 +4009,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesOneTimestampPlusNoTimestampEventNoFlushRiffling() {
 
         try {
@@ -4024,6 +4080,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesOneTimestampPlusNoTimestampEventFlushRiffling() {
 
         try {
@@ -4094,6 +4151,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileOneTimestampPlusNoTimestampSecondFileOneTimestampEventNoFlush() {
 
         try {
@@ -4160,6 +4218,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileOneTimestampPlusNoTimestampSecondFileOneTimestampEventFlush() {
 
         try {
@@ -4226,6 +4285,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileOneTimestampPlusNoTimestampSecondFileOneTimestampEventNoFlushRiffling() {
 
         try {
@@ -4296,6 +4356,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileOneTimestampPlusNoTimestampSecondFileOneTimestampEventFlushRiffling() {
 
         try {
@@ -4366,6 +4427,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileOneTimestampPlusNoTimestampPlusTimestampSecondFileOneTimestampEventNoFlush() {
 
         try {
@@ -4435,6 +4497,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileOneTimestampPlusNoTimestampPlusTimestampSecondFileOneTimestampEventFlush() {
 
         try {
@@ -4504,6 +4567,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileOneTimestampPlusNoTimestampPlusTimestampSecondFileOneTimestampEventNoFlushRiffling() {
 
         try {
@@ -4577,6 +4641,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileOneTimestampPlusNoTimestampPlusTimestampSecondFileOneTimestampEventFlushRiffling() {
 
         try {
@@ -4650,6 +4715,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileOneTimestampPlusNoTimestampPlusTimestampSecondFileOneTimestampPlusNoTimestampEventNoFlush() {
 
         try {
@@ -4719,6 +4785,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileOneTimestampPlusNoTimestampPlusTimestampSecondFileOneTimestampPlusNoTimestampEventFlush() {
 
         try {
@@ -4789,6 +4856,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileOneTimestampPlusNoTimestampPlusTimestampSecondFileOneTimestampPlusNoTimestampEventNoFlushRiffling() {
 
         try {
@@ -4865,6 +4933,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileOneTimestampPlusNoTimestampPlusTimestampSecondFileOneTimestampPlusNoTimestampEventFlushRiffling() {
 
         try {
@@ -4943,6 +5012,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileTNTSecondFileTNThirdFileTEventNoFlushRiffling() {
 
         try {
@@ -5030,6 +5100,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testMultipleFilesFirstFileTNTSecondFileTNThirdFileTEventFlushRiffling() {
 
         try {
@@ -5119,6 +5190,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testCommitPendingsMultilineActiveComplete() {
 
         try {
@@ -5161,6 +5233,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testCommitPendingsMultilineNotActiveComplete() {
 
         try {
@@ -5203,6 +5276,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testCommitPendingsExceptionThrown() {
 
         try {
@@ -5219,6 +5293,7 @@ public class FileEventHelperTest {
             } catch (Exception e) {
                 listEventsExceptionFirstFileFirstException = createListEventsFromThrowable(e, fileHeader, fileHeaderName, fileHeaderValue);
             }
+
 
             bufferTest.addAll(listEventsExceptionFirstFileFirstException);
             int originalBufferTestSize = bufferTest.size();
@@ -5246,6 +5321,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testCreateEventHeadersMultilineActiveFileHeader() {
 
         try {
@@ -5285,6 +5361,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testCreateEventHeadersMultilineActiveWithoutFileHeader() {
 
         try {
@@ -5319,6 +5396,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testCreateEventHeadersMultilineNotActiveFileHeader() {
 
         try {
@@ -5358,6 +5436,7 @@ public class FileEventHelperTest {
 
 
     @Test
+    @SuppressWarnings("all")
     public void testCreateEventHeadersMultilineNotActiveWithoutFileHeader() {
 
         try {
