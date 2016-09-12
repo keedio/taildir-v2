@@ -6,7 +6,7 @@ Features:
 * Recovery mechanism in case flume dies
 * Now, it is possible to read files on startup
 * Process both xml and single event line files.
-* It i spossible to set both number of events or max time in seconds to inject events to channel
+* It is possible to set both number of events or max time in seconds to inject events to channel
 
 #Compilation
 ```
@@ -124,5 +124,11 @@ ag1.sources.r1.eventsCapacity=10000
 ag1.sources.r1.autocommittime=10
 ```
 
+## Metrics
+All metrics related to number of events are based on entering events. The outgoing events (exceptions joined events) are not kept in mind when metrics are calculated
+
+
 ## Log changes
 * Fix a bug found under high load conditions
+
+
