@@ -4,6 +4,7 @@ import org.apache.flume.ChannelException;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.keedio.flume.source.watchdir.listener.LineReadListener;
+import org.keedio.flume.source.watchdir.listener.simpletxtsource.util.ChannelAccessor;
 import org.keedio.flume.source.watchdir.metrics.MetricsEvent;
 import org.keedio.flume.source.watchdir.util.Util;
 import org.slf4j.Logger;
@@ -17,7 +18,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
+import static org.keedio.flume.source.watchdir.listener.simpletxtsource.util.ChannelAccessor.printFilesObserved;
 
 /**
  * This worker proccess the xml file in order to extract the expeted events.
@@ -35,23 +36,23 @@ public class FileEventHelper {
   private List<Integer> listIndexToRemove;
   private Map<String, TreeMap<Integer,Event>> mapPendingEvents;
   private List<Event> listEventToProcess;
-
-
-  FileEventSourceListener listener;
+    
   private List<Event> buffer;
   private LineReadListener lineReadListener;
+  private ChannelAccessor accessor;
+    private boolean isMultilineActive;
   
   public void setLineReadListener(LineReadListener lineReadListener){
     this.lineReadListener = lineReadListener;
   }
 
-  public FileEventHelper(FileEventSourceListener listener) {
-    this.listener = listener;
-    //this.buffer = new ArrayList<>();
+  public FileEventHelper(boolean isMultilineActive) {
+      this.accessor = ChannelAccessor.getInstance();
     this.buffer = new Vector<Event>();
+      this.isMultilineActive = isMultilineActive;
   }
 
-  public synchronized List<Event> getBuffer() {
+  public List<Event> getBuffer() {
     return buffer;
   }
 
@@ -60,7 +61,7 @@ public class FileEventHelper {
     try {
       Date inicio = new Date();
       int procesados = 0;
-      path = this.listener.getFilesObserved().get(inode).getFileName();
+      path = accessor.getFileObserved(inode).getFileName();
       LOGGER.debug("Processing inode:" + inode + ", path: " + path);
       File file = new File(path);
       
@@ -89,10 +90,10 @@ public class FileEventHelper {
     try {
 
       //Si se encuentra activo el tratamiento multilínea realizamos el procesamiento del buffer
-      if (listener.multilineActive) {
+      if (isMultilineActive) {
           processEventBatch();
       } else {
-          listener.getChannelProcessor().processEventBatch(getBuffer());
+          accessor.sendEventsToChannel(getBuffer());
       }
       isComplete = true;
     } catch (ChannelException e) {
@@ -100,20 +101,20 @@ public class FileEventHelper {
       LOGGER.error("Mensajes perdidos: " + getBuffer().size());
       // Borramos el buffer
       LOGGER.error("ERROR AL INYECTAR LOS DATOS EN EL CANAL. PARAMOS EL AGENTE.",e);
-      Util.printFilesObserved(listener.getFilesObserved());
+      printFilesObserved();
       listener.stop();
     } catch (Exception e) {
       LOGGER.error("Excepcion general por los interceptores.",e);
 
-      Util.printFilesObserved(listener.getFilesObserved());
+      printFilesObserved();
     } catch (Throwable e) {
       LOGGER.error("Excepcion tipo throiwable por los interceptores.",e);
 
-      Util.printFilesObserved(listener.getFilesObserved());
+      printFilesObserved();
     } finally {
 
       if (isComplete) {
-          if (!listener.multilineActive) {
+          if (!isMultilineActive) {
               //En caso de no haber tratamiento multilínea vaciamos el buffer
               getBuffer().clear();
           }
@@ -131,7 +132,7 @@ public class FileEventHelper {
     LOGGER.debug("ENTRAMOS EN EL HELPER......");
     //
     Long lastByte = 0L;
-    processInode(this.listener.getFilesObserved().get(inode).getFileName(), inode);
+    processInode(accessor.getFileObserved(inode).getFileName(), inode);
 
   }
 

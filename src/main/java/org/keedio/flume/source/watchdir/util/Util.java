@@ -36,14 +36,5 @@ public class Util {
         return inode;
     }
     
-    public static void printFilesObserved(Map<String, InodeInfo> files){
-        if (files == null || files.size() == 0){
-            LOGGER.warn("No files monitored");
-        } else {
-            LOGGER.warn("Files monitored:");
-            for (Map.Entry<String, InodeInfo> entry : files.entrySet()) {
-                LOGGER.info(entry.getKey() + " -> " + entry.getValue());
-            }
-        }
-    }
+    
 }
