@@ -1,6 +1,7 @@
 package org.keedio.flume.source.watchdir.listener.simpletxtsource;
 
 import org.apache.flume.ChannelException;
+import org.apache.flume.Context;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.keedio.flume.source.watchdir.listener.LineReadListener;
@@ -18,6 +19,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventSourceListener.*;
 import static org.keedio.flume.source.watchdir.listener.simpletxtsource.util.ChannelAccessor.printFilesObserved;
 
 /**
@@ -40,16 +43,26 @@ public class FileEventHelper {
   private List<Event> buffer;
   private LineReadListener lineReadListener;
   private ChannelAccessor accessor;
-    private boolean isMultilineActive;
+  private boolean isMultilineActive;
+    private Integer maxchars;
+    protected boolean multilineAssignToPreviousLine;
+    protected String multilineRegex;
+    protected String multilineFirstLineRegex;
+    protected boolean multilineNegateRegex;
   
   public void setLineReadListener(LineReadListener lineReadListener){
     this.lineReadListener = lineReadListener;
   }
 
-  public FileEventHelper(boolean isMultilineActive) {
-      this.accessor = ChannelAccessor.getInstance();
-    this.buffer = new Vector<Event>();
-      this.isMultilineActive = isMultilineActive;
+  public FileEventHelper(Context context) {
+    this.accessor = ChannelAccessor.getInstance();
+    this.buffer = new Vector<>();
+    this.isMultilineActive = context.getBoolean(MULTILINE_ACTIVE) == null ? false : context.getBoolean(MULTILINE_ACTIVE);
+    this.maxchars = context.getInteger(MAX_CHARS) == null ? 100000 : context.getInteger(MAX_CHARS);
+    this.multilineAssignToPreviousLine = context.getBoolean(MULTILINE_ASIGN_TO_PREVIOUS_LINE) == null ? true : context.getBoolean(MULTILINE_ASIGN_TO_PREVIOUS_LINE);
+      multilineRegex = context.getString(MULTILINE_REGEX);
+      multilineFirstLineRegex = context.getString(MULTILINE_FIRST_LINE_REGEX);
+      multilineNegateRegex = context.getBoolean(MULTILINE_NEGATE_REGEX) == null ? false : context.getBoolean(MULTILINE_NEGATE_REGEX);
   }
 
   public List<Event> getBuffer() {
@@ -138,7 +151,7 @@ public class FileEventHelper {
 
   private void processInode(String path, String inode) throws Exception {
 
-    Long lastLine = listener.getFilesObserved().get(inode).getPosition();
+    Long lastLine = accessor.getFileObserved(inode).getPosition();
     LOGGER.debug(String.format("Se procesa el fichero %s(%s) desde la linea %d", path, inode, lastLine));
 
     if (lastLine < 0) {
@@ -162,7 +175,7 @@ public class FileEventHelper {
         lineReadListener.lineRead(line);
       }
 
-      if (line.length() > listener.maxchars) {
+      if (line.length() > maxchars) {
         LOGGER.debug(String.format("Se superan el tamaño máximo, descartamos el mensaje --> %s", line));
         continue;
       }
@@ -185,15 +198,15 @@ public class FileEventHelper {
 
     LOGGER.debug(String.format("%s(%s):Se procesa actualiza de %d a %d", path, inode, lastLine, lastLine+linesToProc.size()));
 
-    listener.getFilesObserved().get(inode).setPosition(lastLine+linesToProc.size());
+    accessor.getFileObserved(inode).setPosition(lastLine+linesToProc.size());
 
     // Lanzamos los eventos del buffer si sobrepasamos el máximo
     if (getBuffer().size() > listener.eventsCapacity) {
 
-        if (listener.multilineActive) {
+        if (isMultilineActive) {
             processEventBatch();
         } else {
-            listener.getChannelProcessor().processEventBatch(getBuffer());
+            accessor.sendEventsToChannel(getBuffer());
             getBuffer().clear();
         }
 
@@ -341,7 +354,7 @@ public class FileEventHelper {
 
         //Procesamos la lista de eventos a evniar a Flume
         if (listEventToProcess.size() > 0) {
-            listener.getChannelProcessor().processEventBatch(listEventToProcess);
+            accessor.sendEventsToChannel(listEventToProcess);
             clearListEventToProcess();
         }
 
@@ -390,7 +403,7 @@ public class FileEventHelper {
 
         //En el caso de que negate sea true, consideramos eventos de linea simple aquellos que matchean contra la expresión regular (aunque luego existan más líneas
         //pertenecientes al evento
-        if (listener.multilineNegateRegex) {
+        if (multilineNegateRegex) {
             isSimpleLineEvent = !isSimpleLineEvent;
         }
 
@@ -477,7 +490,7 @@ public class FileEventHelper {
                         if (getHeaderEvent) {
                             headersJoinedEvent = partialEvent.getHeaders();
 
-                            if (listener.multilineAssignToPreviousLine) {
+                            if (multilineAssignToPreviousLine) {
                                 //Garantizamos que las cabeceras que se asignan son las del primer evento
                                 getHeaderEvent = false;
                             }
@@ -552,7 +565,7 @@ public class FileEventHelper {
                 if (getHeaderEvent) {
                     headersJoinedEvent = partialEvent.getHeaders();
 
-                    if (listener.multilineAssignToPreviousLine) {
+                    if (multilineAssignToPreviousLine) {
                         //Garantizamos que las cabeceras que se asignan son las del primer evento
                         getHeaderEvent = false;
                     }
@@ -664,7 +677,7 @@ public class FileEventHelper {
 
         Map<String, String> headers = new HashMap<String, String>();
 
-        if (listener.multilineActive) {
+        if (isMultilineActive) {
 
             //2016-08-25 - Con motivo del tratamiento de la excepcion multilinea siempre introducimos cabeceras (sirven para saber a que fichero pertenece la linea)
             //Serían eliminados en el tratamiento posterior

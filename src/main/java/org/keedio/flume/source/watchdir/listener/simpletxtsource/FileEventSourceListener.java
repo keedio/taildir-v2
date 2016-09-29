@@ -88,12 +88,12 @@ public class FileEventSourceListener extends AbstractSource implements
     private static final String BASE_HEADER_NAME = "basenameHeaderKey";
     private static final String EVENTS_CAPACITY = "eventsCapacity";
     private static final String AUTOCOMMIT_TIME = "autocommittime";
-    private static final String MAX_CHARS = "maxcharsonmessage";
-    private static final String MULTILINE_ACTIVE = "multilineActive";
-    private static final String MULTILINE_REGEX = "multilineRegex";
-    private static final String MULTILINE_FIRST_LINE_REGEX = "multilineFirstLineRegex";
-    private static final String MULTILINE_NEGATE_REGEX = "multilineNegateRegex";
-    private static final String MULTILINE_ASIGN_TO_PREVIOUS_LINE = "multilineAssignToPreviousLine";
+    public static final String MAX_CHARS = "maxcharsonmessage";
+    public static final String MULTILINE_ACTIVE = "multilineActive";
+    public static final String MULTILINE_REGEX = "multilineRegex";
+    public static final String MULTILINE_FIRST_LINE_REGEX = "multilineFirstLineRegex";
+    public static final String MULTILINE_NEGATE_REGEX = "multilineNegateRegex";
+    public static final String MULTILINE_ASIGN_TO_PREVIOUS_LINE = "multilineAssignToPreviousLine";
     private static final String MULTILINE_FLUSH_ENTIRE_BUFFER = "multilineFlushEntireBuffer";
     private static final Logger LOGGER = LoggerFactory
 
@@ -224,6 +224,8 @@ public class FileEventSourceListener extends AbstractSource implements
 
             fileSets.add(auxSet);
         }
+        
+        Map<String, Object> properties = new HashMap<>()
 
         helper = new FileEventHelper(this);
         Preconditions.checkState(!fileSets.isEmpty(), "Bad configuration, review documentation on https://github.com/keedio/XMLWinEvent/blob/master/README.md");
