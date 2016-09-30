@@ -82,11 +82,11 @@ public class FileEventSourceListener extends AbstractSource implements
     private static final String PATH_TO_SER = "pathtoser";
     private static final String TIME_TO_SER = "timetoser";
     private static final String FOLLOW_LINKS = "followlinks";
-    private static final String FILE_HEADER = "fileHeader";
-    private static final String FILE_HEADER_NAME = "fileHeaderKey";
-    private static final String BASE_HEADER = "basenameHeader";
-    private static final String BASE_HEADER_NAME = "basenameHeaderKey";
-    private static final String EVENTS_CAPACITY = "eventsCapacity";
+    public static final String FILE_HEADER = "fileHeader";
+    public static final String FILE_HEADER_NAME = "fileHeaderKey";
+    public static final String BASE_HEADER = "basenameHeader";
+    public static final String BASE_HEADER_NAME = "basenameHeaderKey";
+    public static final String EVENTS_CAPACITY = "eventsCapacity";
     private static final String AUTOCOMMIT_TIME = "autocommittime";
     public static final String MAX_CHARS = "maxcharsonmessage";
     public static final String MULTILINE_ACTIVE = "multilineActive";
@@ -94,7 +94,7 @@ public class FileEventSourceListener extends AbstractSource implements
     public static final String MULTILINE_FIRST_LINE_REGEX = "multilineFirstLineRegex";
     public static final String MULTILINE_NEGATE_REGEX = "multilineNegateRegex";
     public static final String MULTILINE_ASIGN_TO_PREVIOUS_LINE = "multilineAssignToPreviousLine";
-    private static final String MULTILINE_FLUSH_ENTIRE_BUFFER = "multilineFlushEntireBuffer";
+    public static final String MULTILINE_FLUSH_ENTIRE_BUFFER = "multilineFlushEntireBuffer";
     private static final Logger LOGGER = LoggerFactory
 
             .getLogger(FileEventSourceListener.class);
@@ -182,6 +182,7 @@ public class FileEventSourceListener extends AbstractSource implements
         autocommittime = context.getInteger(AUTOCOMMIT_TIME) == null ? 10000 : context.getInteger(AUTOCOMMIT_TIME) * 1000;
         maxchars = context.getInteger(MAX_CHARS) == null ? 100000 : context.getInteger(MAX_CHARS);
 
+        /*
         //Multiline
         multilineActive = context.getBoolean(MULTILINE_ACTIVE) == null ? false : context.getBoolean(MULTILINE_ACTIVE);
         multilineRegex = context.getString(MULTILINE_REGEX);
@@ -197,7 +198,7 @@ public class FileEventSourceListener extends AbstractSource implements
         if ((patternMultilineRegex != null) && (multilineFirstLineRegex != null) && (!"".equals(multilineFirstLineRegex))) {
             patternMultilineFirstLineRegex = Pattern.compile(multilineFirstLineRegex);
         }
-
+*/
 
 
         // Lanzamos el proceso de serializacion
@@ -225,9 +226,9 @@ public class FileEventSourceListener extends AbstractSource implements
             fileSets.add(auxSet);
         }
         
-        Map<String, Object> properties = new HashMap<>()
+        //Map<String, Object> properties = new HashMap<>()
 
-        helper = new FileEventHelper(this);
+        helper = new FileEventHelper(context);
         Preconditions.checkState(!fileSets.isEmpty(), "Bad configuration, review documentation on https://github.com/keedio/XMLWinEvent/blob/master/README.md");
 
         serializeFilesThread = new Thread(ser);

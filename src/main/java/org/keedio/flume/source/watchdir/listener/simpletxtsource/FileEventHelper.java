@@ -42,27 +42,48 @@ public class FileEventHelper {
     
   private List<Event> buffer;
   private LineReadListener lineReadListener;
+
   private ChannelAccessor accessor;
   private boolean isMultilineActive;
-    private Integer maxchars;
-    protected boolean multilineAssignToPreviousLine;
-    protected String multilineRegex;
-    protected String multilineFirstLineRegex;
-    protected boolean multilineNegateRegex;
+  private Integer maxchars;
+  protected boolean multilineAssignToPreviousLine;
+  protected String multilineRegex;
+  protected String multilineFirstLineRegex;
+  protected boolean multilineNegateRegex;
+  protected int eventsCapacity;
+  protected boolean fileHeader;
+  protected String fileHeaderName;
+  protected boolean baseHeader;
+  protected String baseHeaderName;
+  protected boolean multilineFlushEntireBuffer;
+  protected Pattern patternMultilineRegex;
+  protected Pattern patternMultilineFirstLineRegex;
   
   public void setLineReadListener(LineReadListener lineReadListener){
     this.lineReadListener = lineReadListener;
   }
 
   public FileEventHelper(Context context) {
-    this.accessor = ChannelAccessor.getInstance();
-    this.buffer = new Vector<>();
-    this.isMultilineActive = context.getBoolean(MULTILINE_ACTIVE) == null ? false : context.getBoolean(MULTILINE_ACTIVE);
-    this.maxchars = context.getInteger(MAX_CHARS) == null ? 100000 : context.getInteger(MAX_CHARS);
-    this.multilineAssignToPreviousLine = context.getBoolean(MULTILINE_ASIGN_TO_PREVIOUS_LINE) == null ? true : context.getBoolean(MULTILINE_ASIGN_TO_PREVIOUS_LINE);
-      multilineRegex = context.getString(MULTILINE_REGEX);
-      multilineFirstLineRegex = context.getString(MULTILINE_FIRST_LINE_REGEX);
-      multilineNegateRegex = context.getBoolean(MULTILINE_NEGATE_REGEX) == null ? false : context.getBoolean(MULTILINE_NEGATE_REGEX);
+    accessor = ChannelAccessor.getInstance();
+    buffer = new Vector<>();
+    isMultilineActive = context.getBoolean(MULTILINE_ACTIVE) == null ? false : context.getBoolean(MULTILINE_ACTIVE);
+    maxchars = context.getInteger(MAX_CHARS) == null ? 100000 : context.getInteger(MAX_CHARS);
+    multilineAssignToPreviousLine = context.getBoolean(MULTILINE_ASIGN_TO_PREVIOUS_LINE) == null ? true : context.getBoolean(MULTILINE_ASIGN_TO_PREVIOUS_LINE);
+    multilineRegex = context.getString(MULTILINE_REGEX);
+    multilineFirstLineRegex = context.getString(MULTILINE_FIRST_LINE_REGEX);
+    multilineNegateRegex = context.getBoolean(MULTILINE_NEGATE_REGEX) == null ? false : context.getBoolean(MULTILINE_NEGATE_REGEX);
+    eventsCapacity = context.getInteger(EVENTS_CAPACITY) == null ? 1000 : context.getInteger(EVENTS_CAPACITY);
+    fileHeader = context.getBoolean(FILE_HEADER) == null ? false : context.getBoolean(FILE_HEADER);
+    fileHeaderName = context.getString(FILE_HEADER_NAME);
+    multilineFlushEntireBuffer = context.getBoolean(MULTILINE_FLUSH_ENTIRE_BUFFER) == null ? false : context.getBoolean(MULTILINE_FLUSH_ENTIRE_BUFFER);
+
+    //En caso de ser necesario compilamos los patterns de las expresiones regulares (general y de primera línea)
+    if ((isMultilineActive) && (multilineRegex != null) && (!"".equals(multilineRegex))) {
+        patternMultilineRegex = Pattern.compile(multilineRegex);
+    }
+    if ((patternMultilineRegex != null) && (multilineFirstLineRegex != null) && (!"".equals(multilineFirstLineRegex))) {
+        patternMultilineFirstLineRegex = Pattern.compile(multilineFirstLineRegex);
+    }
   }
 
   public List<Event> getBuffer() {
@@ -84,8 +105,9 @@ public class FileEventHelper {
         long intervalo = new Date().getTime() - inicio.getTime();
 
         // Notificamos el tiempo de procesado para las metricas
-        listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.MEAN_FILE_PROCESS, intervalo));
-        listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.TOTAL_FILE_EVENTS, procesados));
+        //TODO: Metricas
+        //listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.MEAN_FILE_PROCESS, intervalo));
+        //listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.TOTAL_FILE_EVENTS, procesados));
 
       } else {
         LOGGER.warn("File '" + file + "' associated with inode '"+inode+"' does not exists and cannot be processed.");
@@ -115,7 +137,8 @@ public class FileEventHelper {
       // Borramos el buffer
       LOGGER.error("ERROR AL INYECTAR LOS DATOS EN EL CANAL. PARAMOS EL AGENTE.",e);
       printFilesObserved();
-      listener.stop();
+        //TODO: Do stop listener
+      //listener.stop();
     } catch (Exception e) {
       LOGGER.error("Excepcion general por los interceptores.",e);
 
@@ -192,7 +215,8 @@ public class FileEventHelper {
       getBuffer().add(ev);
 
       // Notificamos un evento de nuevo mensaje
-      listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.NEW_EVENT));
+      //TODO: Metricas
+      //  listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.NEW_EVENT));
 
     }
 
@@ -201,7 +225,7 @@ public class FileEventHelper {
     accessor.getFileObserved(inode).setPosition(lastLine+linesToProc.size());
 
     // Lanzamos los eventos del buffer si sobrepasamos el máximo
-    if (getBuffer().size() > listener.eventsCapacity) {
+    if (getBuffer().size() > eventsCapacity) {
 
         if (isMultilineActive) {
             processEventBatch();
@@ -241,7 +265,7 @@ public class FileEventHelper {
             Event eventBuffer = listEventsBuffer.get(index);
 
             //En funcion del parametro negate la forma de procesar el buffer de eventos sera diferente
-            if (!listener.multilineNegateRegex) {
+            if (!multilineNegateRegex) {
               //Se consideran que aquellos eventos que satisfacen la expresion regular son eventos multilínea.
 
               if (isSimpleLineEvent(eventBuffer)) {
@@ -252,7 +276,7 @@ public class FileEventHelper {
                   if (joinedEvent != null) {
 
                       //Si la cabecera fuera ficticia la removemos
-                      if (!listener.fileHeader) {
+                      if (!fileHeader) {
                           joinedEvent.getHeaders().remove(FILEHEADERNAME_FAKE);
                       }
 
@@ -263,7 +287,7 @@ public class FileEventHelper {
 
 
                   //El evento actual tiene que ser procesado en Flume. Si la cabecera fuera ficticia la removemos
-                  if (!listener.fileHeader) {
+                  if (!fileHeader) {
                       eventBuffer.getHeaders().remove(FILEHEADERNAME_FAKE);
                   }
 
@@ -283,7 +307,7 @@ public class FileEventHelper {
                     if (joinedEvent != null) {
 
                         //Si la cabecera fuera ficticia la removemos
-                        if (!listener.fileHeader) {
+                        if (!fileHeader) {
                             joinedEvent.getHeaders().remove(FILEHEADERNAME_FAKE);
                         }
 
@@ -309,7 +333,7 @@ public class FileEventHelper {
                   if (joinedEvent != null) {
 
                       //Si la cabecera fuera ficticia la removemos
-                      if (!listener.fileHeader) {
+                      if (!fileHeader) {
                           joinedEvent.getHeaders().remove(FILEHEADERNAME_FAKE);
                       }
 
@@ -328,14 +352,14 @@ public class FileEventHelper {
 
         //Si por configuracion indicamos que se procese el buffer entero, todos los eventos que queden como pendientes tienen que ser enviados a flume
         // (1 evento por fichero).
-        if (listener.multilineFlushEntireBuffer) {
+        if (multilineFlushEntireBuffer) {
             //Generamos eventos para toda la informacion pendiente existente
             List<Event> listPendingEvents = processAllPendingEvents();
 
             if ((listPendingEvents != null) && (listPendingEvents.size() > 0)) {
 
                 //Si los eventos han sido creados con la cabecera fake, se elimina
-                if (!listener.fileHeader) {
+                if (!fileHeader) {
 
                     for (Event pendingEvent : listPendingEvents) {
                         pendingEvent.getHeaders().remove(FILEHEADERNAME_FAKE);
@@ -389,14 +413,14 @@ public class FileEventHelper {
 
 
 
-        Matcher matcher = listener.patternMultilineRegex.matcher(message);
+        Matcher matcher = patternMultilineRegex.matcher(message);
         isSimpleLineEvent = !matcher.matches();
 
         if (LOGGER.isDebugEnabled()) {
             String fileHeaderName = getFileHeaderNameFromHeaders(eventBuffer);
 
             StringBuilder sb = new StringBuilder();
-            sb.append("El mensaje del evento [").append(message).append("] procedente del fichero [").append(fileHeaderName).append("] match multilineRegex [").append(listener.patternMultilineRegex).append("] --> ").append(!isSimpleLineEvent);
+            sb.append("El mensaje del evento [").append(message).append("] procedente del fichero [").append(fileHeaderName).append("] match multilineRegex [").append(patternMultilineRegex).append("] --> ").append(!isSimpleLineEvent);
             LOGGER.debug(sb.toString());
         }
 
@@ -422,12 +446,12 @@ public class FileEventHelper {
         boolean isMultilineFirstLineEvent = false;
 
         //Solo tendremos en cuenta la detección de la primera linea de excepción si se define en las propiedades.
-        if (listener.patternMultilineFirstLineRegex != null) {
+        if (patternMultilineFirstLineRegex != null) {
 
             //Obtenemos el String correspondiente al mensaje a partir dal array de bytes
             String message = new String(eventBuffer.getBody());
 
-            Matcher matcher = listener.patternMultilineFirstLineRegex.matcher(message);
+            Matcher matcher = patternMultilineFirstLineRegex.matcher(message);
 
             isMultilineFirstLineEvent = matcher.matches();
 
@@ -435,7 +459,7 @@ public class FileEventHelper {
                 String fileHeaderName = getFileHeaderNameFromHeaders(eventBuffer);
 
                 StringBuilder sb = new StringBuilder();
-                sb.append("El mensaje del evento [").append(message).append("] procedente del fichero [").append(fileHeaderName).append("] match multilineFirstLineRegex [").append(listener.patternMultilineFirstLineRegex).append("] --> ").append(isMultilineFirstLineEvent);
+                sb.append("El mensaje del evento [").append(message).append("] procedente del fichero [").append(fileHeaderName).append("] match multilineFirstLineRegex [").append(patternMultilineFirstLineRegex).append("] --> ").append(isMultilineFirstLineEvent);
                 LOGGER.debug(sb.toString());
             }
 
@@ -656,8 +680,8 @@ public class FileEventHelper {
 
             if ((headersEventBuffer != null) && (!headersEventBuffer.isEmpty())) {
 
-                if (listener.fileHeader) {
-                    fileHeaderName = headersEventBuffer.get(listener.fileHeaderName);
+                if (fileHeader) {
+                    fileHeaderName = headersEventBuffer.get(fileHeaderName);
                 } else {
                     fileHeaderName = headersEventBuffer.get(FILEHEADERNAME_FAKE);
                 }
@@ -682,24 +706,24 @@ public class FileEventHelper {
             //2016-08-25 - Con motivo del tratamiento de la excepcion multilinea siempre introducimos cabeceras (sirven para saber a que fichero pertenece la linea)
             //Serían eliminados en el tratamiento posterior
 
-            if (listener.fileHeader) {
-                headers.put(listener.fileHeaderName, path);
+            if (fileHeader) {
+                headers.put(fileHeaderName, path);
             } else {
                 headers.put(FILEHEADERNAME_FAKE, path);
             }
-            if (listener.baseHeader) {
-                headers.put(listener.baseHeaderName, new File(path).getName());
+            if (baseHeader) {
+                headers.put(baseHeaderName, new File(path).getName());
             }
 
 
         } else {
 
             // Put header props
-            if (listener.fileHeader) {
-                headers.put(listener.fileHeaderName, path);
+            if (fileHeader) {
+                headers.put(fileHeaderName, path);
             }
-            if (listener.baseHeader) {
-                headers.put(listener.baseHeaderName, new File(path).getName());
+            if (baseHeader) {
+                headers.put(baseHeaderName, new File(path).getName());
             }
         }
 
