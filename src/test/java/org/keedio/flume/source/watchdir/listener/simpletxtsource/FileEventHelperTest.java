@@ -100,7 +100,7 @@ public class FileEventHelperTest {
             mockListener.fileHeaderName = fileHeaderName;
         }
 
-        spyHelper = spy(new FileEventHelper(mockListener));
+        //spyHelper = spy(new FileEventHelper(mockListener));
 
         //Si dentro del metodo a la hora de eliminar eventos del buffer se accede mediante getBuffer() tambien podemos establecer el buffer de esta manera
         //when(spyHelper.getBuffer()).thenReturn(bufferTest);

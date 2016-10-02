@@ -20,11 +20,16 @@ public class ChannelAccessor {
             .getLogger(ChannelAccessor.class);
     
     private ChannelProcessor channelProcessor;
+
+
     protected Map<String, InodeInfo> filesObserved;
     
     private static ChannelAccessor instance;
     
     public static void init(ChannelProcessor channelProcessor, Map<String, InodeInfo> filesObserved){
+        if (channelProcessor == null) {
+            throw new DuplicateInitializationException();
+        }
         if (instance == null){
             instance = new ChannelAccessor(channelProcessor, filesObserved);
         } else {
@@ -95,5 +100,11 @@ public class ChannelAccessor {
                 LOGGER.info(entry.getKey() + " -> " + entry.getValue());
             }
         }
+    }
+
+
+
+    public synchronized Map<String, InodeInfo> getFilesObserved() {
+        return filesObserved;
     }
 }

@@ -43,6 +43,9 @@ public class FileEventHelper {
   private List<Event> buffer;
   private LineReadListener lineReadListener;
 
+
+
+
   private ChannelAccessor accessor;
   private boolean isMultilineActive;
   private Integer maxchars;
@@ -58,6 +61,11 @@ public class FileEventHelper {
   protected boolean multilineFlushEntireBuffer;
   protected Pattern patternMultilineRegex;
   protected Pattern patternMultilineFirstLineRegex;
+
+
+  public ChannelAccessor getAccessor() {
+      return accessor;
+  }
   
   public void setLineReadListener(LineReadListener lineReadListener){
     this.lineReadListener = lineReadListener;

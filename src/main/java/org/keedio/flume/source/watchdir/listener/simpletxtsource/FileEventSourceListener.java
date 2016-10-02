@@ -49,6 +49,7 @@ import org.keedio.flume.source.watchdir.WatchDirFileSet;
 import org.keedio.flume.source.watchdir.WatchDirListener;
 import org.keedio.flume.source.watchdir.WatchDirObserver;
 import org.keedio.flume.source.watchdir.listener.LineReadListener;
+import org.keedio.flume.source.watchdir.listener.simpletxtsource.util.ChannelAccessor;
 import org.keedio.flume.source.watchdir.metrics.MetricsController;
 import org.keedio.flume.source.watchdir.metrics.MetricsEvent;
 import org.keedio.flume.source.watchdir.util.Util;
@@ -133,6 +134,8 @@ public class FileEventSourceListener extends AbstractSource implements
     protected Pattern patternMultilineRegex;
     protected Pattern patternMultilineFirstLineRegex;
 
+    private Context context;
+
 
 
 
@@ -160,6 +163,7 @@ public class FileEventSourceListener extends AbstractSource implements
 
     @Override
     public void configure(Context context) {
+        this.context = context;
         LOGGER.info("Source Configuring..");
         printVersionNumber();
         
@@ -204,13 +208,14 @@ public class FileEventSourceListener extends AbstractSource implements
         // Lanzamos el proceso de serializacion
         if (ser == null)
             ser = new SerializeFilesThread(this, pathToSerialize, timeToSer);
-        
+        //Map<String, InodeInfo> filesObserved = null;
         try {
             filesObserved = ser.getMapFromSerFile();
         } catch (Exception e) {
             LOGGER.info("No se pudo deserializar el fichero.");
             filesObserved = new HashMap<String, InodeInfo>();
         }
+
 
         // Creamos los filesets
         
@@ -228,15 +233,16 @@ public class FileEventSourceListener extends AbstractSource implements
         
         //Map<String, Object> properties = new HashMap<>()
 
-        helper = new FileEventHelper(context);
+        //helper = new FileEventHelper(context);
         Preconditions.checkState(!fileSets.isEmpty(), "Bad configuration, review documentation on https://github.com/keedio/XMLWinEvent/blob/master/README.md");
-
-        serializeFilesThread = new Thread(ser);
+/*
+        serializeFilesThread = new Thread(ser,"serializeFilesThread");
         serializeFilesThread.start();
-        autoCommitThread =  new Thread(new AutocommitThread(this, autocommittime));
+        autoCommitThread =  new Thread(new AutocommitThread(this, autocommittime),"AutocommitThread");
         autoCommitThread.start();
-        cleanRemovedEventsProcessingThread = new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime));
+        cleanRemovedEventsProcessingThread = new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime),"CleanRemovedEventsProcessingThread");
         cleanRemovedEventsProcessingThread.start();
+*/
     }
 
     public static Map<String, Map<String, String>> getMapProperties(Map<String, String> all) {
@@ -290,6 +296,14 @@ public class FileEventSourceListener extends AbstractSource implements
         }
 
         super.start();
+        ChannelAccessor.init(getChannelProcessor(), filesObserved);
+        helper = new FileEventHelper(context);
+        serializeFilesThread = new Thread(ser,"serializeFilesThread");
+        serializeFilesThread.start();
+        autoCommitThread =  new Thread(new AutocommitThread(this, autocommittime),"AutocommitThread");
+        autoCommitThread.start();
+        cleanRemovedEventsProcessingThread = new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime),"CleanRemovedEventsProcessingThread");
+        cleanRemovedEventsProcessingThread.start();
     }
 
     @Override
@@ -437,7 +451,7 @@ public class FileEventSourceListener extends AbstractSource implements
     }
 
     public synchronized Map<String, InodeInfo> getFilesObserved() {
-        return filesObserved;
+       return getHelper().getAccessor().getFilesObserved();
     }
     
     private void printVersionNumber(){
