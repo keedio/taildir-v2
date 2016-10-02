@@ -226,14 +226,14 @@ public class FileEventSourceListener extends AbstractSource implements
             fileSets.add(auxSet);
         }
 
-        helper = new FileEventHelper(this);
+        //helper = new FileEventHelper(this);
         Preconditions.checkState(!fileSets.isEmpty(), "Bad configuration, review documentation on https://github.com/keedio/XMLWinEvent/blob/master/README.md");
 
-        serializeFilesThread = new Thread(ser);
+        serializeFilesThread = new Thread(ser,"SerializeFilesThread");
         serializeFilesThread.start();
-        autoCommitThread =  new Thread(new AutocommitThread(this, autocommittime));
+        autoCommitThread =  new Thread(new AutocommitThread(this, autocommittime),"AutocommitThread");
         autoCommitThread.start();
-        cleanRemovedEventsProcessingThread = new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime));
+        cleanRemovedEventsProcessingThread = new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime),"CleanRemovedEventsProcessingThread");
         cleanRemovedEventsProcessingThread.start();
     }
 
@@ -287,8 +287,10 @@ public class FileEventSourceListener extends AbstractSource implements
             LOGGER.error(e.getMessage(), e);
         }
 
-        ChannelAccessor.init(getChannelProcessor());
         super.start();
+        ChannelAccessor.init(getChannelProcessor());
+        helper = new FileEventHelper(this);
+
     }
 
     @Override
