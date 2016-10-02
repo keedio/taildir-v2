@@ -4,6 +4,7 @@ import org.apache.flume.ChannelException;
 import org.apache.flume.Event;
 import org.apache.flume.event.EventBuilder;
 import org.keedio.flume.source.watchdir.listener.LineReadListener;
+import org.keedio.flume.source.watchdir.listener.simpletxtsource.util.ChannelAccessor;
 import org.keedio.flume.source.watchdir.metrics.MetricsEvent;
 import org.keedio.flume.source.watchdir.util.Util;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ public class FileEventHelper {
   private Map<String, TreeMap<Integer,Event>> mapPendingEvents;
   private List<Event> listEventToProcess;
 
-
+  private ChannelAccessor accessor;
   FileEventSourceListener listener;
   private List<Event> buffer;
   private LineReadListener lineReadListener;
@@ -46,6 +47,7 @@ public class FileEventHelper {
   }
 
   public FileEventHelper(FileEventSourceListener listener) {
+    this.accessor = ChannelAccessor.getInstance();
     this.listener = listener;
     //this.buffer = new ArrayList<>();
     this.buffer = new Vector<Event>();
@@ -92,7 +94,8 @@ public class FileEventHelper {
       if (listener.multilineActive) {
           processEventBatch();
       } else {
-          listener.getChannelProcessor().processEventBatch(getBuffer());
+          //listener.getChannelProcessor().processEventBatch(getBuffer());
+          accessor.sendEventsToChannel(getBuffer());
       }
       isComplete = true;
     } catch (ChannelException e) {

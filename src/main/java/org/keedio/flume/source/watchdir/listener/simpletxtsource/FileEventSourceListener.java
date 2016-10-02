@@ -60,6 +60,7 @@ import java.io.File;
 import java.util.regex.Pattern;
 
 import com.google.common.base.Preconditions;
+import org.keedio.flume.source.watchdir.listener.simpletxtsource.util.ChannelAccessor;
 
 
 /**
@@ -286,6 +287,7 @@ public class FileEventSourceListener extends AbstractSource implements
             LOGGER.error(e.getMessage(), e);
         }
 
+        ChannelAccessor.init(getChannelProcessor());
         super.start();
     }
 
