@@ -130,12 +130,15 @@ public class FileEventHelper {
   public void commitPendings() {
 
     boolean isComplete = false;
+
+    LOGGER.info("BEGIN commitPendings");
     try {
 
       //Si se encuentra activo el tratamiento multilínea realizamos el procesamiento del buffer
       if (isMultilineActive) {
           processEventBatch();
       } else {
+          LOGGER.info("commitPendings ==> Send ALL events to channel");
           accessor.sendEventsToChannel(getBuffer());
       }
       isComplete = true;
@@ -168,6 +171,8 @@ public class FileEventHelper {
       }
 
     }
+
+    LOGGER.info("END commitPendings");
 
   }
 
@@ -216,11 +221,15 @@ public class FileEventHelper {
       //Obtenemos los headers para el evento
       Map<String, String> headers = createEventHeaders(path);
 
+      LOGGER.info("processInode ==> Create headers for path: " + path);
+
       if (!headers.isEmpty()) {
           ev.setHeaders(headers);
       }
 
       getBuffer().add(ev);
+
+      LOGGER.info("processInode ==> headers size: " + ev.getHeaders().size());
 
       // Notificamos un evento de nuevo mensaje
       //TODO: Metricas
@@ -235,6 +244,7 @@ public class FileEventHelper {
     // Lanzamos los eventos del buffer si sobrepasamos el máximo
     if (getBuffer().size() > eventsCapacity) {
 
+        LOGGER.info("processInode ==> events capacity excedeed");
         if (isMultilineActive) {
             processEventBatch();
         } else {
@@ -257,6 +267,8 @@ public class FileEventHelper {
      */
     private synchronized void processEventBatch() {
 
+        LOGGER.info("BEGIN processEventBatch");
+
         List<Event> listEventsBuffer = getBuffer();
 
         listIndexToRemove = new ArrayList<>();
@@ -267,10 +279,13 @@ public class FileEventHelper {
         //independientemente de que otros procesos anyadan más eventos al mismo
         int bufferSize = listEventsBuffer.size();
 
+        LOGGER.info("processEventBatch Buffer size: " + bufferSize);
 
         //Recorremos los eventos que posea el buffer
         for (int index = 0; index < bufferSize; index ++) {
             Event eventBuffer = listEventsBuffer.get(index);
+
+            LOGGER.info("processEventBatch ==> eventBuffer headers size: " + eventBuffer.getHeaders().size());
 
             //En funcion del parametro negate la forma de procesar el buffer de eventos sera diferente
             if (!multilineNegateRegex) {
@@ -384,14 +399,18 @@ public class FileEventHelper {
         }
 
 
+        LOGGER.info("processEventBatch ==> eventos a enviar a channel: " + listEventToProcess.size());
         //Procesamos la lista de eventos a evniar a Flume
         if (listEventToProcess.size() > 0) {
+            LOGGER.info("processEventBatch ==> send Events to channel");
             accessor.sendEventsToChannel(listEventToProcess);
             clearListEventToProcess();
         }
 
         //Ordenamos los indices antes de su eliminación del buffer para garantizar un orden de borrado correcto
         Collections.sort(listIndexToRemove);
+
+        LOGGER.info("processEventBatch ==> Buffer size PRE remove index: " + buffer.size());
 
         //Eliminamos del buffer los elementos seleccionados para su borrado. El borrado lo efectuado en orden inverso
         ListIterator<Integer> listIndexesRemoveIterator = listIndexToRemove.listIterator(listIndexToRemove.size());
@@ -400,6 +419,10 @@ public class FileEventHelper {
 
           buffer.remove(indexToRemove);
         }
+
+        LOGGER.info("processEventBatch ==> Buffer size POST remove index: " + buffer.size());
+
+        LOGGER.info("END processEventBatch");
 
 
     }
@@ -413,6 +436,12 @@ public class FileEventHelper {
      * más de una línea (eventos de excepción, etc)
      */
     private synchronized boolean isSimpleLineEvent(Event eventBuffer) {
+
+        LOGGER.info("isSimpleLineEvent ==> eventBuffer headers size: " + eventBuffer.getHeaders().size());
+        for (String headerName : eventBuffer.getHeaders().keySet()) {
+            LOGGER.info("isSimpleLineEvent ==> headerName: " + headerName);
+            LOGGER.info("isSimpleLineEvent ==> headerValue: " + eventBuffer.getHeaders().get(headerName));
+        }
 
         boolean isSimpleLineEvent = false;
 
@@ -489,7 +518,11 @@ public class FileEventHelper {
         Event joinedEvent = null;
         StringBuilder sb = new StringBuilder();
 
+        LOGGER.info("BEGIN processPendingEventsFile");
+
         if (eventBuffer != null) {
+
+            LOGGER.info("processPendingEventsFile ==> " + mapPendingEvents.size());
 
             //Obtenemos el fichero al que pertenece el evento a partir de la header (sea ficticia o no)
             String fileHeaderName = getFileHeaderNameFromHeaders(eventBuffer);
@@ -498,6 +531,8 @@ public class FileEventHelper {
 
                 //Obtenemos el Map de los eventos pendientes del fichero al que pertenece el evento
                 if (mapPendingEvents.containsKey(fileHeaderName)) {
+
+                    LOGGER.info("processPendingEventsFile ==> mapPendingEvents.containsKey("+fileHeaderName+") : " + mapPendingEvents.containsKey(fileHeaderName));
 
                     TreeMap<Integer, Event> treeMapPendingEventsFile = mapPendingEvents.get(fileHeaderName);
 
@@ -551,7 +586,11 @@ public class FileEventHelper {
 
         }
 
+        LOGGER.info("END processPendingEventsFile");
+
         //Devolvemos el evento creado
+
+        LOGGER.info("processPendingEventsFile ==> joinedEvent : " + joinedEvent);
         return joinedEvent;
     }
 
@@ -679,7 +718,7 @@ public class FileEventHelper {
      */
     private synchronized String getFileHeaderNameFromHeaders(Event eventBuffer) {
 
-        String fileHeaderName = null;
+        String eventFileHeaderName = null;
 
         if (eventBuffer != null) {
 
@@ -689,15 +728,15 @@ public class FileEventHelper {
             if ((headersEventBuffer != null) && (!headersEventBuffer.isEmpty())) {
 
                 if (fileHeader) {
-                    fileHeaderName = headersEventBuffer.get(fileHeaderName);
+                    eventFileHeaderName = headersEventBuffer.get(fileHeaderName);
                 } else {
-                    fileHeaderName = headersEventBuffer.get(FILEHEADERNAME_FAKE);
+                    eventFileHeaderName = headersEventBuffer.get(FILEHEADERNAME_FAKE);
                 }
 
             }
         }
 
-        return fileHeaderName;
+        return eventFileHeaderName;
     }
 
     /**
