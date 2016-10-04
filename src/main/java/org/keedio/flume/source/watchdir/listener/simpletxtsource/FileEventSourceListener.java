@@ -288,9 +288,11 @@ public class FileEventSourceListener extends AbstractSource implements
         }
 
         super.start();
-        ChannelAccessor.init(getChannelProcessor());
-        helper = new FileEventHelper(this);
-
+        
+        if (helper == null) {//during tests a mock helper instance is previosly configured
+            ChannelAccessor.init(getChannelProcessor());
+            helper = new FileEventHelper(this);
+        }
     }
 
     @Override

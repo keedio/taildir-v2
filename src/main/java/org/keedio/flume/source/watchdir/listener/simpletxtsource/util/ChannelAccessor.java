@@ -25,11 +25,7 @@ public class ChannelAccessor {
     private static ChannelAccessor instance;
 
     public static void init(ChannelProcessor channelProcessor){
-        if (instance == null){
-            instance = new ChannelAccessor(channelProcessor);
-        } else {
-            throw new DuplicateInitializationException();
-        }
+        instance = new ChannelAccessor(channelProcessor);
     }
 
     public static ChannelAccessor getInstance(){

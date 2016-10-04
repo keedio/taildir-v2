@@ -7,6 +7,7 @@ import org.apache.flume.event.EventBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.keedio.flume.source.watchdir.listener.simpletxtsource.util.ChannelAccessor;
 import org.keedio.flume.utils.TestUtils;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -79,6 +80,7 @@ public class FileEventHelperTest {
         mockListener = mock(FileEventSourceListener.class);
         when(mockListener.getChannelProcessor()).thenReturn(mockChannelProcesor);
         doNothing().when(mockChannelProcesor).processEventBatch(anyList());
+        ChannelAccessor.init(mockChannelProcesor);
 
         //Establecemos las propiedades del listener que determinan el comportamiento del metodo
         mockListener.multilineActive = multilineActive;
