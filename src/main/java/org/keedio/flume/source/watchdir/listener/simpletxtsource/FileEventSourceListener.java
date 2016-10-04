@@ -232,7 +232,7 @@ public class FileEventSourceListener extends AbstractSource implements
         serializeFilesThread = new Thread(ser,"SerializeFilesThread");
         serializeFilesThread.start();
         autoCommitThread =  new Thread(new AutocommitThread(this, autocommittime),"AutocommitThread");
-        autoCommitThread.start();
+        
         cleanRemovedEventsProcessingThread = new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime),"CleanRemovedEventsProcessingThread");
         cleanRemovedEventsProcessingThread.start();
     }
@@ -293,6 +293,8 @@ public class FileEventSourceListener extends AbstractSource implements
             ChannelAccessor.init(getChannelProcessor());
             helper = new FileEventHelper(this);
         }
+
+        autoCommitThread.start();
     }
 
     @Override
