@@ -102,6 +102,8 @@ public class FileEventHelperTest {
             mockListener.fileHeaderName = fileHeaderName;
         }
 
+        mockListener.multilineEventLineSeparator = "\n";
+
         spyHelper = spy(new FileEventHelper(mockListener));
 
         //Si dentro del metodo a la hora de eliminar eventos del buffer se accede mediante getBuffer() tambien podemos establecer el buffer de esta manera

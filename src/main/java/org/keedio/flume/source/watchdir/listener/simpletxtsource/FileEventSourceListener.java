@@ -96,6 +96,8 @@ public class FileEventSourceListener extends AbstractSource implements
     private static final String MULTILINE_NEGATE_REGEX = "multilineNegateRegex";
     private static final String MULTILINE_ASIGN_TO_PREVIOUS_LINE = "multilineAssignToPreviousLine";
     private static final String MULTILINE_FLUSH_ENTIRE_BUFFER = "multilineFlushEntireBuffer";
+    private static final String MULTILINE_EVENT_LINE_SEPARATOR = "multilineEventLineSeparator";
+    private static final String LINE_FEED = "\n";
     private static final Logger LOGGER = LoggerFactory
 
             .getLogger(FileEventSourceListener.class);
@@ -133,7 +135,7 @@ public class FileEventSourceListener extends AbstractSource implements
     protected boolean multilineFlushEntireBuffer;
     protected Pattern patternMultilineRegex;
     protected Pattern patternMultilineFirstLineRegex;
-
+    protected String multilineEventLineSeparator;
 
 
 
@@ -199,7 +201,9 @@ public class FileEventSourceListener extends AbstractSource implements
             patternMultilineFirstLineRegex = Pattern.compile(multilineFirstLineRegex);
         }
 
+        multilineEventLineSeparator = context.getString(MULTILINE_EVENT_LINE_SEPARATOR) == null? LINE_FEED : context.getString(MULTILINE_EVENT_LINE_SEPARATOR);
 
+        LOGGER.debug("multilineEventLineSeparator: [" + multilineEventLineSeparator + "]");
 
         // Lanzamos el proceso de serializacion
         if (ser == null)

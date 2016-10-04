@@ -31,7 +31,7 @@ public class FileEventHelper {
       .getLogger(FileEventHelper.class);
 
   protected static final String FILEHEADERNAME_FAKE = "fileHeaderNameFake";
-  private static final String LINE_FEED = "\n";
+
 
   private List<Integer> listIndexToRemove;
   private Map<String, TreeMap<Integer,Event>> mapPendingEvents;
@@ -492,7 +492,7 @@ public class FileEventHelper {
                         //Obtenemos el String correspondiente al mensaje a partir dal array de bytes
                         String partialMessage = new String(partialEvent.getBody());
 
-                        sb.append(partialMessage).append(LINE_FEED);
+                        sb.append(partialMessage).append(listener.multilineEventLineSeparator);
 
                         //Obtenemos la cabecera del evento si procede
                         if (getHeaderEvent) {
@@ -510,7 +510,7 @@ public class FileEventHelper {
 
                     //Eliminamos el ultimo salto de linea
                     if (sb.length() > 0) {
-                        sb.setLength(sb.length() - 1);
+                        sb.setLength(sb.length() - listener.multilineEventLineSeparator.length());
                     }
                     //Tenemos las cabeceras del primer (o del ultimo evento) y el StringBuilder con el contenido de todos los eventos pendientes
                     joinedEvent = EventBuilder.withBody(sb.toString().getBytes());
@@ -567,7 +567,7 @@ public class FileEventHelper {
                 //Obtenemos el String correspondiente al mensaje a partir dal array de bytes
                 String partialMessage = new String(partialEvent.getBody());
 
-                sb.append(partialMessage).append(LINE_FEED);
+                sb.append(partialMessage).append(listener.multilineEventLineSeparator);
 
                 //Obtenemos la cabecera del evento si procede
                 if (getHeaderEvent) {
@@ -585,7 +585,7 @@ public class FileEventHelper {
 
             //Eliminamos el ultimo salto de linea
             if (sb.length() > 0) {
-                sb.setLength(sb.length() - 1);
+                sb.setLength(sb.length() - listener.multilineEventLineSeparator.length());
             }
             //Tenemos las cabeceras del primer (o del ultimo evento) y el StringBuilder con el contenido de todos los eventos pendientes
             joinedEvent = EventBuilder.withBody(sb.toString().getBytes());

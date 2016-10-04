@@ -102,6 +102,8 @@ Edit flume configuration file with the parameters above.
 |multilineNegateRegex|false|If true, a message not matching the pattern will constitute a match of a multiline event|
 |multilineAssignToPreviousLine|true|Indicates the relation to the multi-line event. If true the headers of the first event will be the headers of the multiline event. Otherwise will be the headers of the last event|
 |multilineFlushEntireBuffer|false|If true the pending multiline events are sent at the end of buffer processing (The entire buffer is processed)|
+|multilineEventLineSeparator| \n |Character inserted between lines of a multiline event|
+
 
 
 * Example
