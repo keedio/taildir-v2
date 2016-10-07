@@ -90,7 +90,7 @@ public class FileEventHelper {
 
     boolean isComplete = false;
 
-    LOGGER.info("BEGIN commitPendings");
+    LOGGER.debug("BEGIN commitPendings");
     try {
 
       //Si se encuentra activo el tratamiento multilínea realizamos el procesamiento del buffer
@@ -98,7 +98,7 @@ public class FileEventHelper {
           processEventBatch();
       } else {
           //listener.getChannelProcessor().processEventBatch(getBuffer());
-          LOGGER.info("commitPendings ===> Send ALL events to channel");
+          LOGGER.debug("commitPendings ===> Send ALL events to channel");
           accessor.sendEventsToChannel(getBuffer());
       }
       isComplete = true;
@@ -131,7 +131,7 @@ public class FileEventHelper {
 
     }
 
-    LOGGER.info("END commitPendings");
+    LOGGER.debug("END commitPendings");
 
   }
 
@@ -198,7 +198,7 @@ public class FileEventHelper {
     // Lanzamos los eventos del buffer si sobrepasamos el máximo
     if (getBuffer().size() > listener.eventsCapacity) {
 
-        LOGGER.info("processInode ==> events capacity excedeed");
+        LOGGER.debug("processInode ==> events capacity excedeed");
         if (listener.multilineActive) {
             processEventBatch();
         } else {
@@ -222,7 +222,7 @@ public class FileEventHelper {
      */
     private synchronized void processEventBatch() {
 
-        LOGGER.info("BEGIN processEventBatch");
+        LOGGER.debug("BEGIN processEventBatch");
 
         List<Event> listEventsBuffer = getBuffer();
 
@@ -235,7 +235,7 @@ public class FileEventHelper {
         //independientemente de que otros procesos anyadan más eventos al mismo
         int bufferSize = listEventsBuffer.size();
 
-        LOGGER.info("processEventBatch Buffer size: " + bufferSize);
+        LOGGER.debug("processEventBatch Buffer size: " + bufferSize);
 
         //Recorremos los eventos que posea el buffer
         for (int index = 0; index < bufferSize; index ++) {
@@ -353,11 +353,11 @@ public class FileEventHelper {
         }
 
 
-        LOGGER.info("processEventBatch ==> eventos a enviar a channel: " + listEventToProcess.size());
+        LOGGER.debug("processEventBatch ==> eventos a enviar a channel: " + listEventToProcess.size());
         //Procesamos la lista de eventos a enviar a Flume
         if (listEventToProcess.size() > 0) {
             //listener.getChannelProcessor().processEventBatch(listEventToProcess);
-            LOGGER.info("processEventBatch ====> send Events to channel");
+            LOGGER.debug("processEventBatch ====> send Events to channel");
             accessor.sendEventsToChannel(listEventToProcess);
             clearListEventToProcess();
         }
@@ -366,7 +366,7 @@ public class FileEventHelper {
         Collections.sort(listIndexToRemove);
 
 
-        LOGGER.info("processEventBatch ==> Buffer size PRE remove index: " + buffer.size());
+        LOGGER.debug("processEventBatch ==> Buffer size PRE remove index: " + buffer.size());
 
         //Eliminamos del buffer los elementos seleccionados para su borrado. El borrado lo efectuado en orden inverso
         ListIterator<Integer> listIndexesRemoveIterator = listIndexToRemove.listIterator(listIndexToRemove.size());
@@ -375,9 +375,9 @@ public class FileEventHelper {
 
           buffer.remove(indexToRemove);
         }
-        LOGGER.info("processEventBatch ==> Buffer size POST remove index: " + buffer.size());
+        LOGGER.debug("processEventBatch ==> Buffer size POST remove index: " + buffer.size());
 
-        LOGGER.info("END processEventBatch");
+        LOGGER.debug("END processEventBatch");
     }
 
 

@@ -121,7 +121,8 @@ public class FileEventSourceListener extends AbstractSource implements
     protected int maxchars;
     protected FileEventHelper helper;
     private Map<String, Lock> locks;
-    
+
+
     private Thread autoCommitThread = null;
     private Thread cleanRemovedEventsProcessingThread = null;
     private Thread serializeFilesThread = null;
@@ -136,7 +137,6 @@ public class FileEventSourceListener extends AbstractSource implements
     protected Pattern patternMultilineRegex;
     protected Pattern patternMultilineFirstLineRegex;
     protected String multilineEventLineSeparator;
-
 
 
 
@@ -160,6 +160,8 @@ public class FileEventSourceListener extends AbstractSource implements
     public FileEventHelper getHelper() {
         return helper;
     }
+
+    public Thread getAutoCommitThread() { return autoCommitThread; }
 
     @Override
     public void configure(Context context) {
@@ -236,7 +238,7 @@ public class FileEventSourceListener extends AbstractSource implements
         serializeFilesThread = new Thread(ser,"SerializeFilesThread");
         serializeFilesThread.start();
         autoCommitThread =  new Thread(new AutocommitThread(this, autocommittime),"AutocommitThread");
-        
+
         cleanRemovedEventsProcessingThread = new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime),"CleanRemovedEventsProcessingThread");
         cleanRemovedEventsProcessingThread.start();
     }
@@ -298,7 +300,9 @@ public class FileEventSourceListener extends AbstractSource implements
             helper = new FileEventHelper(this);
         }
 
+
         autoCommitThread.start();
+
     }
 
     @Override
@@ -348,7 +352,10 @@ public class FileEventSourceListener extends AbstractSource implements
                                 inodes.put(inode, inf);
                             }
                             metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
-                            if (event.getSet().haveToProccess(event.getPath())) 
+                            if (event.getSet().haveToProccess(event.getPath()))
+                                if (helper==null) {
+                                    LOGGER.debug("HELPER NULL Process EVENTO NEW: " + event.getPath() + " inodo: " + inode);
+                                }
                                 helper.process(inode);
                             LOGGER.debug("EVENTO NEW: " + event.getPath() + " inodo: " + inode);
                         } else {
@@ -463,4 +470,6 @@ public class FileEventSourceListener extends AbstractSource implements
             LOGGER.error("Cannot retrieve taildir agent version number");
         }
     }
+
+
 }	
