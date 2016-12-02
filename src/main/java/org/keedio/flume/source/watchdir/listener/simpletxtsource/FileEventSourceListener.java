@@ -166,7 +166,7 @@ public class FileEventSourceListener extends AbstractSource implements
     @Override
     public void configure(Context context) {
         LOGGER.info("Source Configuring..");
-        printVersionNumber();
+        LOGGER.info("Starting taildir agent "+printVersionNumber());
         
         metricsController = new MetricsController();
 
@@ -326,6 +326,8 @@ public class FileEventSourceListener extends AbstractSource implements
         }
         
         super.stop();
+
+        LOGGER.info("Stopping taildir agent "+printVersionNumber());
     }
 
     @Override
@@ -352,11 +354,12 @@ public class FileEventSourceListener extends AbstractSource implements
                                 inodes.put(inode, inf);
                             }
                             metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
-                            if (event.getSet().haveToProccess(event.getPath()))
-                                if (helper==null) {
+                            if (event.getSet().haveToProccess(event.getPath())) {
+                                if (helper == null) {
                                     LOGGER.debug("HELPER NULL Process EVENTO NEW: " + event.getPath() + " inodo: " + inode);
                                 }
                                 helper.process(inode);
+                            }
                             LOGGER.debug("EVENTO NEW: " + event.getPath() + " inodo: " + inode);
                         } else {
                             LOGGER.debug("File '"+event.getPath()+"' will not be added to the list of observed files");
@@ -456,7 +459,7 @@ public class FileEventSourceListener extends AbstractSource implements
         return filesObserved;
     }
     
-    private void printVersionNumber(){
+    private String printVersionNumber(){
         try {
             final Properties properties = new Properties();
             properties.load(this.getClass().getClassLoader().getResourceAsStream("taildir-v2.properties"));
@@ -465,9 +468,9 @@ public class FileEventSourceListener extends AbstractSource implements
             String artifactId = properties.getProperty("artifactId");
             String version = properties.getProperty("version");
             String mvnCoords = groupId + ":" + artifactId + ":" + version;
-            LOGGER.info("Starting taildir agent '" + mvnCoords + "'");
+            return mvnCoords;
         } catch (Exception ex){
-            LOGGER.error("Cannot retrieve taildir agent version number");
+            return "Cannot retrieve taildir agent version number";
         }
     }
 
