@@ -1,4 +1,4 @@
-package org.keedio.flume.source.watchdir.txt;
+package org.keedio.flume.source.watchdir.listener.simpletxtsource;
 
 import com.google.common.collect.Lists;
 import com.google.common.io.LineReader;
@@ -19,7 +19,9 @@ import org.keedio.flume.source.watchdir.WatchDirEvent;
 import org.keedio.flume.source.watchdir.WatchDirObserver;
 import org.keedio.flume.source.watchdir.listener.LineReadListener;
 import org.keedio.flume.source.watchdir.listener.fake.FakeListener;
+import org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventHelper;
 import org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventSourceListener;
+import org.keedio.flume.source.watchdir.listener.simpletxtsource.util.ChannelAccessor;
 import org.mockito.Mock;
 
 import java.io.*;
@@ -103,8 +105,12 @@ public class FileEventSourceListenerRollingTest {
         ChannelSelector rcs = new ReplicatingChannelSelector();
         rcs.setChannels(Lists.newArrayList(channel));
 
-        listener.setChannelProcessor(new ChannelProcessor(rcs));
+        ChannelProcessor channelProcessor = new ChannelProcessor(rcs);
+        ChannelAccessor.init(channelProcessor);
+        
+        listener.setChannelProcessor(channelProcessor);
         listener.configure(context);
+        listener.helper = new FileEventHelper(listener);
         listener.setLineReadListener(lineReadListenerMock);
         listener.start();
 

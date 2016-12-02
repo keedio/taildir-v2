@@ -57,8 +57,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.regex.Pattern;
 
 import com.google.common.base.Preconditions;
+import org.keedio.flume.source.watchdir.listener.simpletxtsource.util.ChannelAccessor;
 
 
 /**
@@ -88,6 +90,14 @@ public class FileEventSourceListener extends AbstractSource implements
     private static final String EVENTS_CAPACITY = "eventsCapacity";
     private static final String AUTOCOMMIT_TIME = "autocommittime";
     private static final String MAX_CHARS = "maxcharsonmessage";
+    private static final String MULTILINE_ACTIVE = "multilineActive";
+    private static final String MULTILINE_REGEX = "multilineRegex";
+    private static final String MULTILINE_FIRST_LINE_REGEX = "multilineFirstLineRegex";
+    private static final String MULTILINE_NEGATE_REGEX = "multilineNegateRegex";
+    private static final String MULTILINE_ASIGN_TO_PREVIOUS_LINE = "multilineAssignToPreviousLine";
+    private static final String MULTILINE_FLUSH_ENTIRE_BUFFER = "multilineFlushEntireBuffer";
+    private static final String MULTILINE_EVENT_LINE_SEPARATOR = "multilineEventLineSeparator";
+    private static final String LINE_FEED = "\n";
     private static final Logger LOGGER = LoggerFactory
 
             .getLogger(FileEventSourceListener.class);
@@ -111,10 +121,25 @@ public class FileEventSourceListener extends AbstractSource implements
     protected int maxchars;
     protected FileEventHelper helper;
     private Map<String, Lock> locks;
-    
+
+
     private Thread autoCommitThread = null;
     private Thread cleanRemovedEventsProcessingThread = null;
     private Thread serializeFilesThread = null;
+
+    //Multiline
+    protected boolean multilineActive;
+    protected String multilineRegex;
+    protected String multilineFirstLineRegex;
+    protected boolean multilineNegateRegex;
+    protected boolean multilineAssignToPreviousLine;
+    protected boolean multilineFlushEntireBuffer;
+    protected Pattern patternMultilineRegex;
+    protected Pattern patternMultilineFirstLineRegex;
+    protected String multilineEventLineSeparator;
+
+
+
 
     public void setLineReadListener(LineReadListener lineReadListener) {
         helper.setLineReadListener(lineReadListener);
@@ -136,10 +161,12 @@ public class FileEventSourceListener extends AbstractSource implements
         return helper;
     }
 
+    public Thread getAutoCommitThread() { return autoCommitThread; }
+
     @Override
     public void configure(Context context) {
         LOGGER.info("Source Configuring..");
-        printVersionNumber();
+        LOGGER.info("Starting taildir agent "+printVersionNumber());
         
         metricsController = new MetricsController();
 
@@ -159,6 +186,26 @@ public class FileEventSourceListener extends AbstractSource implements
         eventsCapacity = context.getInteger(EVENTS_CAPACITY) == null ? 1000 : context.getInteger(EVENTS_CAPACITY);
         autocommittime = context.getInteger(AUTOCOMMIT_TIME) == null ? 10000 : context.getInteger(AUTOCOMMIT_TIME) * 1000;
         maxchars = context.getInteger(MAX_CHARS) == null ? 100000 : context.getInteger(MAX_CHARS);
+
+        //Multiline
+        multilineActive = context.getBoolean(MULTILINE_ACTIVE) == null ? false : context.getBoolean(MULTILINE_ACTIVE);
+        multilineRegex = context.getString(MULTILINE_REGEX);
+        multilineFirstLineRegex = context.getString(MULTILINE_FIRST_LINE_REGEX);
+        multilineNegateRegex = context.getBoolean(MULTILINE_NEGATE_REGEX) == null ? false : context.getBoolean(MULTILINE_NEGATE_REGEX);
+        multilineAssignToPreviousLine = context.getBoolean(MULTILINE_ASIGN_TO_PREVIOUS_LINE) == null ? true : context.getBoolean(MULTILINE_ASIGN_TO_PREVIOUS_LINE);
+        multilineFlushEntireBuffer = context.getBoolean(MULTILINE_FLUSH_ENTIRE_BUFFER) == null ? false : context.getBoolean(MULTILINE_FLUSH_ENTIRE_BUFFER);
+
+        //En caso de ser necesario compilamos los patterns de las expresiones regulares (general y de primera línea)
+        if ((multilineActive) && (multilineRegex != null) && (!"".equals(multilineRegex))) {
+            patternMultilineRegex = Pattern.compile(multilineRegex);
+        }
+        if ((patternMultilineRegex != null) && (multilineFirstLineRegex != null) && (!"".equals(multilineFirstLineRegex))) {
+            patternMultilineFirstLineRegex = Pattern.compile(multilineFirstLineRegex);
+        }
+
+        multilineEventLineSeparator = context.getString(MULTILINE_EVENT_LINE_SEPARATOR) == null? LINE_FEED : context.getString(MULTILINE_EVENT_LINE_SEPARATOR);
+
+        LOGGER.debug("multilineEventLineSeparator: [" + multilineEventLineSeparator + "]");
 
         // Lanzamos el proceso de serializacion
         if (ser == null)
@@ -185,14 +232,14 @@ public class FileEventSourceListener extends AbstractSource implements
             fileSets.add(auxSet);
         }
 
-        helper = new FileEventHelper(this);
+        //helper = new FileEventHelper(this);
         Preconditions.checkState(!fileSets.isEmpty(), "Bad configuration, review documentation on https://github.com/keedio/XMLWinEvent/blob/master/README.md");
 
-        serializeFilesThread = new Thread(ser);
+        serializeFilesThread = new Thread(ser,"SerializeFilesThread");
         serializeFilesThread.start();
-        autoCommitThread =  new Thread(new AutocommitThread(this, autocommittime));
-        autoCommitThread.start();
-        cleanRemovedEventsProcessingThread = new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime));
+        autoCommitThread =  new Thread(new AutocommitThread(this, autocommittime),"AutocommitThread");
+
+        cleanRemovedEventsProcessingThread = new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime),"CleanRemovedEventsProcessingThread");
         cleanRemovedEventsProcessingThread.start();
     }
 
@@ -247,6 +294,15 @@ public class FileEventSourceListener extends AbstractSource implements
         }
 
         super.start();
+        
+        if (helper == null) {//during tests a mock helper instance is previosly configured
+            ChannelAccessor.init(getChannelProcessor());
+            helper = new FileEventHelper(this);
+        }
+
+
+        autoCommitThread.start();
+
     }
 
     @Override
@@ -270,6 +326,8 @@ public class FileEventSourceListener extends AbstractSource implements
         }
         
         super.stop();
+
+        LOGGER.info("Stopping taildir agent "+printVersionNumber());
     }
 
     @Override
@@ -296,8 +354,12 @@ public class FileEventSourceListener extends AbstractSource implements
                                 inodes.put(inode, inf);
                             }
                             metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
-                            if (event.getSet().haveToProccess(event.getPath())) 
+                            if (event.getSet().haveToProccess(event.getPath())) {
+                                if (helper == null) {
+                                    LOGGER.debug("HELPER NULL Process EVENTO NEW: " + event.getPath() + " inodo: " + inode);
+                                }
                                 helper.process(inode);
+                            }
                             LOGGER.debug("EVENTO NEW: " + event.getPath() + " inodo: " + inode);
                         } else {
                             LOGGER.debug("File '"+event.getPath()+"' will not be added to the list of observed files");
@@ -397,7 +459,7 @@ public class FileEventSourceListener extends AbstractSource implements
         return filesObserved;
     }
     
-    private void printVersionNumber(){
+    private String printVersionNumber(){
         try {
             final Properties properties = new Properties();
             properties.load(this.getClass().getClassLoader().getResourceAsStream("taildir-v2.properties"));
@@ -406,9 +468,11 @@ public class FileEventSourceListener extends AbstractSource implements
             String artifactId = properties.getProperty("artifactId");
             String version = properties.getProperty("version");
             String mvnCoords = groupId + ":" + artifactId + ":" + version;
-            LOGGER.info("Starting taildir agent '" + mvnCoords + "'");
+            return mvnCoords;
         } catch (Exception ex){
-            LOGGER.error("Cannot retrieve taildir agent version number");
+            return "Cannot retrieve taildir agent version number";
         }
     }
+
+
 }	
