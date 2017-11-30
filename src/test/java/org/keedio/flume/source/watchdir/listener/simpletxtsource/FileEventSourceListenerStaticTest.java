@@ -1,6 +1,11 @@
 package org.keedio.flume.source.watchdir.listener.simpletxtsource;
 
+import com.google.common.collect.ImmutableMap;
+import org.apache.flume.Context;
+import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.keedio.flume.source.watchdir.InodeInfo;
 import org.keedio.flume.source.watchdir.WatchDirEvent;
@@ -10,12 +15,18 @@ import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import static org.junit.Assert.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.times;
+import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.powermock.api.mockito.PowerMockito.*;
@@ -23,6 +34,7 @@ import static org.powermock.api.mockito.PowerMockito.*;
 /**
  * Created by luca on 19/08/16.
  */
+
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(org.keedio.flume.source.watchdir.util.Util.class)
 public class FileEventSourceListenerStaticTest {
@@ -31,6 +43,58 @@ public class FileEventSourceListenerStaticTest {
     final String accessFile = "/var/log/httpd/"+accessFileName;
     final String accessFileRenamed = "/var/log/httpd/"+accessFileName + "-20160810";
 
+    @Test
+    public void testInitWithInconsistentObservedFileMap() throws Exception {
+        mockStatic(org.keedio.flume.source.watchdir.util.Util.class);
+
+        Path tmpFile0 = Files.createTempFile("testInitWithInconsistentObservedFileMap", "");
+        Path tmpFile1 = Files.createTempFile("testInitWithInconsistentObservedFileMap", "");
+
+
+        given(org.keedio.flume.source.watchdir.util.Util.getInodeID(tmpFile0.toFile().getAbsolutePath())).willReturn("1269");
+        given(org.keedio.flume.source.watchdir.util.Util.getInodeID(tmpFile1.toFile().getAbsolutePath())).willReturn("1274");
+        
+        Map<String, InodeInfo> mockFilesObserved = new HashMap<>();
+
+        
+        SerializeFilesThread mockSerializer = mock(SerializeFilesThread.class);
+        when(mockSerializer.getMapFromSerFile()).thenReturn(mockFilesObserved);
+
+        InodeInfo errorFileInodeInfo = spy(new InodeInfo(0L, tmpFile0.toFile().getAbsolutePath()));
+        InodeInfo accessFileInodeInfo = spy(new InodeInfo(321123L, tmpFile1.toFile().getAbsolutePath()));
+
+        InodeInfo notExistentFileInodeInfo = spy(new InodeInfo(321123L, accessFile));
+
+        mockFilesObserved.put("269", errorFileInodeInfo);
+        mockFilesObserved.put("273", accessFileInodeInfo);
+        mockFilesObserved.put("293", notExistentFileInodeInfo);
+
+        FileEventSourceListener listener = new FileEventSourceListener();
+        listener.filesObserved =  mockFilesObserved;
+        listener.ser = mockSerializer;
+
+        HashSet<WatchDirFileSet> mockHashSet = spy(new HashSet<WatchDirFileSet>());
+        when(mockHashSet.isEmpty()).thenReturn(false);
+        
+        listener.fileSets = mockHashSet;
+
+        Context ctx = mock(Context.class);
+        when(ctx.getString(anyString())).thenReturn("");
+        when(ctx.getInteger(anyString())).thenReturn(1);
+        when(ctx.getBoolean(anyString())).thenReturn(false);
+        when(ctx.getSubProperties(anyString())).thenReturn(ImmutableMap.of());
+
+        listener.configure(ctx);
+        
+        assertFalse(listener.getFilesObserved().containsKey("269"));
+        assertFalse(listener.getFilesObserved().containsKey("273"));
+        assertFalse(listener.getFilesObserved().containsKey("293"));
+
+        assertFalse(listener.getFilesObserved().containsKey("1269"));
+        assertFalse(listener.getFilesObserved().containsKey("1273"));
+
+        listener.stop();
+    }
 
     @Test
     public void testRenameEventDifferentInode() throws WatchDirException {

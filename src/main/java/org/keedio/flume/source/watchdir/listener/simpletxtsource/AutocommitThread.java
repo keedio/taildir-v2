@@ -13,28 +13,32 @@ import org.slf4j.LoggerFactory;
 
 public class AutocommitThread implements Runnable {
 
-	private FileEventSourceListener listener;
-	private int seconds;
-	private static final Logger LOGGER = LoggerFactory
-			.getLogger(AutocommitThread.class);
-	
-	public AutocommitThread(FileEventSourceListener listener, int seconds) {
-		this.listener = listener;
-		this.seconds = seconds;
-	}
-	
-	@Override
-	public void run() {
-			while (true) {
-		    try {
-  			  listener.getHelper().commitPendings();
-  			  
-  			  Thread.sleep(seconds);
-		    } catch (Exception e) {
-		      LOGGER.debug("Error en autocommit... Esperando...."); 
-		    }
-			}
-		
-	}
+    private FileEventSourceListener listener;
+    private int seconds;
+    private static final Logger LOGGER = LoggerFactory
+            .getLogger(AutocommitThread.class);
+
+    public AutocommitThread(FileEventSourceListener listener, int seconds) {
+        this.listener = listener;
+        this.seconds = seconds;
+    }
+
+    @Override
+    public void run() {
+        while (true) {
+            try {
+                listener.getHelper().commitPendings();
+
+                Thread.sleep(seconds);
+            } catch (InterruptedException e){
+                LOGGER.debug("AutocommitThread interrupted. Exiting");
+                break;
+            } 
+            catch (Exception e) {
+                LOGGER.debug("Error en autocommit... Esperando....");
+            }
+        }
+
+    }
 
 }

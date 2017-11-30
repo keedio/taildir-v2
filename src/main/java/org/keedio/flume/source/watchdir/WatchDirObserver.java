@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+import org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventSourceListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,9 +67,26 @@ public class WatchDirObserver implements Runnable {
     	listeners.add(listener);
     }
     
-    protected void update(WatchDirEvent event) {
+    protected void update(WatchDirEvent event) throws InterruptedException {
     	for (WatchDirListener listener:getListeners()) {
     		try{
+
+    			//Check autocommit thread is running (Fix bug: when readonstartup is true the process begin before helper is built)
+
+    			String listenerClassName = listener.getClass().getName();
+    			LOGGER.debug("Listener class name: " + listenerClassName);
+				if (listenerClassName.equals("org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventSourceListener")) {
+					FileEventSourceListener fileEventSourceListener = (FileEventSourceListener) listener;
+					Thread.State autoCommitThreadState = fileEventSourceListener.getAutoCommitThread().getState();
+					LOGGER.debug("autoCommitThread state: " + autoCommitThreadState);
+					while (autoCommitThreadState.equals(Thread.State.NEW)) {
+						LOGGER.debug("autoCommitThread state: " + autoCommitThreadState);
+						Thread.sleep(1000);
+						autoCommitThreadState = fileEventSourceListener.getAutoCommitThread().getState();
+					}
+					LOGGER.debug("autoCommitThread state: " + autoCommitThreadState);
+
+				}
         		listener.process(event);
     		} catch (WatchDirException e) {
     			LOGGER.info("Error procesando el listener", e);  

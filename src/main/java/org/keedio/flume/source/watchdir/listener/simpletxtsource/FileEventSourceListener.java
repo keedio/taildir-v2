@@ -41,9 +41,7 @@ import org.apache.flume.Context;
 import org.apache.flume.EventDrivenSource;
 import org.apache.flume.conf.Configurable;
 import org.apache.flume.source.AbstractSource;
-import org.apache.velocity.app.event.implement.IncludeNotFound;
 import org.keedio.flume.source.watchdir.CleanRemovedEventsProcessingThread;
-import org.keedio.flume.source.watchdir.FileUtil;
 import org.keedio.flume.source.watchdir.InodeInfo;
 import org.keedio.flume.source.watchdir.WatchDirEvent;
 import org.keedio.flume.source.watchdir.WatchDirException;
@@ -59,8 +57,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.regex.Pattern;
 
 import com.google.common.base.Preconditions;
+import org.keedio.flume.source.watchdir.listener.simpletxtsource.util.ChannelAccessor;
 
 
 /**
@@ -90,19 +90,27 @@ public class FileEventSourceListener extends AbstractSource implements
     private static final String EVENTS_CAPACITY = "eventsCapacity";
     private static final String AUTOCOMMIT_TIME = "autocommittime";
     private static final String MAX_CHARS = "maxcharsonmessage";
+    private static final String MULTILINE_ACTIVE = "multilineActive";
+    private static final String MULTILINE_REGEX = "multilineRegex";
+    private static final String MULTILINE_FIRST_LINE_REGEX = "multilineFirstLineRegex";
+    private static final String MULTILINE_NEGATE_REGEX = "multilineNegateRegex";
+    private static final String MULTILINE_ASIGN_TO_PREVIOUS_LINE = "multilineAssignToPreviousLine";
+    private static final String MULTILINE_FLUSH_ENTIRE_BUFFER = "multilineFlushEntireBuffer";
+    private static final String MULTILINE_EVENT_LINE_SEPARATOR = "multilineEventLineSeparator";
+    private static final String LINE_FEED = "\n";
     private static final Logger LOGGER = LoggerFactory
 
             .getLogger(FileEventSourceListener.class);
     private Set<WatchDirObserver> monitor;
     private MetricsController metricsController;
-    private Set<WatchDirFileSet> fileSets;
+    protected Set<WatchDirFileSet> fileSets;
     protected Map<String, Properties> dirProps;
     private boolean readOnStartUp;
     private int maxWorkers = 10;
     protected int bufferSize = 1024;
     protected String suffix;
     protected Map<String, InodeInfo> filesObserved;
-    private SerializeFilesThread ser;
+    protected SerializeFilesThread ser;
     private boolean followLinks;
     protected boolean fileHeader;
     protected String fileHeaderName;
@@ -113,6 +121,25 @@ public class FileEventSourceListener extends AbstractSource implements
     protected int maxchars;
     protected FileEventHelper helper;
     private Map<String, Lock> locks;
+
+
+    private Thread autoCommitThread = null;
+    private Thread cleanRemovedEventsProcessingThread = null;
+    private Thread serializeFilesThread = null;
+
+    //Multiline
+    protected boolean multilineActive;
+    protected String multilineRegex;
+    protected String multilineFirstLineRegex;
+    protected boolean multilineNegateRegex;
+    protected boolean multilineAssignToPreviousLine;
+    protected boolean multilineFlushEntireBuffer;
+    protected Pattern patternMultilineRegex;
+    protected Pattern patternMultilineFirstLineRegex;
+    protected String multilineEventLineSeparator;
+
+
+
 
     public void setLineReadListener(LineReadListener lineReadListener) {
         helper.setLineReadListener(lineReadListener);
@@ -134,11 +161,13 @@ public class FileEventSourceListener extends AbstractSource implements
         return helper;
     }
 
+    public Thread getAutoCommitThread() { return autoCommitThread; }
+
     @Override
     public void configure(Context context) {
-
         LOGGER.info("Source Configuring..");
-
+        LOGGER.info("Starting taildir agent "+printVersionNumber());
+        
         metricsController = new MetricsController();
 
         Map<String, String> criterias = context.getSubProperties(CONFIG_DIRS);
@@ -158,8 +187,30 @@ public class FileEventSourceListener extends AbstractSource implements
         autocommittime = context.getInteger(AUTOCOMMIT_TIME) == null ? 10000 : context.getInteger(AUTOCOMMIT_TIME) * 1000;
         maxchars = context.getInteger(MAX_CHARS) == null ? 100000 : context.getInteger(MAX_CHARS);
 
+        //Multiline
+        multilineActive = context.getBoolean(MULTILINE_ACTIVE) == null ? false : context.getBoolean(MULTILINE_ACTIVE);
+        multilineRegex = context.getString(MULTILINE_REGEX);
+        multilineFirstLineRegex = context.getString(MULTILINE_FIRST_LINE_REGEX);
+        multilineNegateRegex = context.getBoolean(MULTILINE_NEGATE_REGEX) == null ? false : context.getBoolean(MULTILINE_NEGATE_REGEX);
+        multilineAssignToPreviousLine = context.getBoolean(MULTILINE_ASIGN_TO_PREVIOUS_LINE) == null ? true : context.getBoolean(MULTILINE_ASIGN_TO_PREVIOUS_LINE);
+        multilineFlushEntireBuffer = context.getBoolean(MULTILINE_FLUSH_ENTIRE_BUFFER) == null ? false : context.getBoolean(MULTILINE_FLUSH_ENTIRE_BUFFER);
+
+        //En caso de ser necesario compilamos los patterns de las expresiones regulares (general y de primera línea)
+        if ((multilineActive) && (multilineRegex != null) && (!"".equals(multilineRegex))) {
+            patternMultilineRegex = Pattern.compile(multilineRegex);
+        }
+        if ((patternMultilineRegex != null) && (multilineFirstLineRegex != null) && (!"".equals(multilineFirstLineRegex))) {
+            patternMultilineFirstLineRegex = Pattern.compile(multilineFirstLineRegex);
+        }
+
+        multilineEventLineSeparator = context.getString(MULTILINE_EVENT_LINE_SEPARATOR) == null? LINE_FEED : context.getString(MULTILINE_EVENT_LINE_SEPARATOR);
+
+        LOGGER.debug("multilineEventLineSeparator: [" + multilineEventLineSeparator + "]");
+
         // Lanzamos el proceso de serializacion
-        ser = new SerializeFilesThread(this, pathToSerialize, timeToSer);
+        if (ser == null)
+            ser = new SerializeFilesThread(this, pathToSerialize, timeToSer);
+        
         try {
             filesObserved = ser.getMapFromSerFile();
         } catch (Exception e) {
@@ -168,7 +219,10 @@ public class FileEventSourceListener extends AbstractSource implements
         }
 
         // Creamos los filesets
-        fileSets = new HashSet<WatchDirFileSet>();
+        
+        if (fileSets == null)
+            fileSets = new HashSet<WatchDirFileSet>();
+        
         locks = new HashMap<String, Lock>();
         Iterator it = getCriterias.keySet().iterator();
         while (it.hasNext()) {
@@ -178,13 +232,15 @@ public class FileEventSourceListener extends AbstractSource implements
             fileSets.add(auxSet);
         }
 
-        helper = new FileEventHelper(this);
+        //helper = new FileEventHelper(this);
         Preconditions.checkState(!fileSets.isEmpty(), "Bad configuration, review documentation on https://github.com/keedio/XMLWinEvent/blob/master/README.md");
 
-        new Thread(ser).start();
-        new Thread(new AutocommitThread(this, autocommittime)).start();
-        new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime)).start();
+        serializeFilesThread = new Thread(ser,"SerializeFilesThread");
+        serializeFilesThread.start();
+        autoCommitThread =  new Thread(new AutocommitThread(this, autocommittime),"AutocommitThread");
 
+        cleanRemovedEventsProcessingThread = new Thread(new CleanRemovedEventsProcessingThread(this, autocommittime),"CleanRemovedEventsProcessingThread");
+        cleanRemovedEventsProcessingThread.start();
     }
 
     public static Map<String, Map<String, String>> getMapProperties(Map<String, String> all) {
@@ -238,6 +294,15 @@ public class FileEventSourceListener extends AbstractSource implements
         }
 
         super.start();
+        
+        if (helper == null) {//during tests a mock helper instance is previosly configured
+            ChannelAccessor.init(getChannelProcessor());
+            helper = new FileEventHelper(this);
+        }
+
+
+        autoCommitThread.start();
+
     }
 
     @Override
@@ -249,7 +314,20 @@ public class FileEventSourceListener extends AbstractSource implements
             LOGGER.error("Error al serializar el mapa");
         }
         metricsController.stop();
+        
+        if (serializeFilesThread != null && serializeFilesThread.isAlive()){
+            serializeFilesThread.interrupt();
+        }
+        if (autoCommitThread != null && autoCommitThread.isAlive()){ 
+            autoCommitThread.interrupt();
+        }
+        if (cleanRemovedEventsProcessingThread != null && cleanRemovedEventsProcessingThread.isAlive()){
+            cleanRemovedEventsProcessingThread.interrupt();
+        }
+        
         super.stop();
+
+        LOGGER.info("Stopping taildir agent "+printVersionNumber());
     }
 
     @Override
@@ -257,23 +335,36 @@ public class FileEventSourceListener extends AbstractSource implements
 
         String inode;
         InodeInfo info;
-
+        Map<String, InodeInfo> inodes = getFilesObserved();
+        
         try {
             // Si no esta instanciado el source informamos
             switch (event.getType()) {
 
                 case "ENTRY_CREATE":
                     inode = Util.getInodeID(event.getPath());
-                    info = getFilesObserved().get(inode);
+                    info = inodes.get(inode);
 
                     //Comprobamos si el inodo no existia, en cuyo caso se crea. Si ya existia viene de una renombrado.
-                    if (!getFilesObserved().containsKey(Util.getInodeID(event.getPath()))) {
-                        InodeInfo inf = new InodeInfo(0L, event.getPath());
-                        getFilesObserved().put(inode, inf);
-                        metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
-                        if (event.getSet().haveToProccess(event.getPath())) helper.process(inode);
-
-                        LOGGER.debug("EVENTO NEW: " + event.getPath() + " inodo: " + inode);
+                    if (!inodes.containsKey(Util.getInodeID(event.getPath()))) {
+                        if (event.getSet().haveToProccess(event.getPath())) {
+                            InodeInfo inf = new InodeInfo(0L, event.getPath());
+                            
+                            synchronized (inodes) {
+                                inodes.put(inode, inf);
+                            }
+                            metricsController.manage(new MetricsEvent(MetricsEvent.NEW_FILE));
+                            if (event.getSet().haveToProccess(event.getPath())) {
+                                if (helper == null) {
+                                    LOGGER.debug("HELPER NULL Process EVENTO NEW: " + event.getPath() + " inodo: " + inode);
+                                }
+                                helper.process(inode);
+                            }
+                            LOGGER.debug("EVENTO NEW: " + event.getPath() + " inodo: " + inode);
+                        } else {
+                            LOGGER.debug("File '"+event.getPath()+"' will not be added to the list of observed files");
+                        }
+                        
                     } else {
                         // Viene de rotado. 
 
@@ -322,13 +413,15 @@ public class FileEventSourceListener extends AbstractSource implements
                         org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventSourceListenerStaticTest
                         para comprobar de forma automatica esta condición.
                         */
-                        getFilesObserved().remove(inode);
+                        synchronized (inodes) {
+                            inodes.remove(inode);
+                        }
                     }
                     // Notificamos nuevo fichero creado
                     break;
                 case "ENTRY_MODIFY":
                     inode = Util.getInodeID(event.getPath());
-                    info = getFilesObserved().get(inode);
+                    info = inodes.get(inode);
 
                     if (info == null) {
                         LOGGER.debug("Se inserta en fichero no monitorizado. Continuamos " + event.getPath() + ", inodo: " + inode);
@@ -336,7 +429,9 @@ public class FileEventSourceListener extends AbstractSource implements
                         if (event.getSet().haveToProccess(event.getPath())) {
                             LOGGER.debug("Fichero no catalogado, se añade a la lista de ficheros monitorizados: " + event.getPath());
                             InodeInfo ii = new InodeInfo(0L, event.getPath());
-                            getFilesObserved().put(inode, ii);
+                            synchronized (inodes) {
+                                inodes.put(inode, ii);
+                            }
                             helper.process(inode);
                         }
                         break;
@@ -363,4 +458,21 @@ public class FileEventSourceListener extends AbstractSource implements
     public synchronized Map<String, InodeInfo> getFilesObserved() {
         return filesObserved;
     }
+    
+    private String printVersionNumber(){
+        try {
+            final Properties properties = new Properties();
+            properties.load(this.getClass().getClassLoader().getResourceAsStream("taildir-v2.properties"));
+            
+            String groupId = properties.getProperty("groupId");
+            String artifactId = properties.getProperty("artifactId");
+            String version = properties.getProperty("version");
+            String mvnCoords = groupId + ":" + artifactId + ":" + version;
+            return mvnCoords;
+        } catch (Exception ex){
+            return "Cannot retrieve taildir agent version number";
+        }
+    }
+
+
 }	
