@@ -1,4 +1,5 @@
-#flume-taildir-v2-source
+Flume-taildir-v2-source
+=======================
 Source of Flume NG for tailing files in a directory. This source is based on flume-taildirectory and XMLWinEvent version. The two sources have been packaged in a single jar extracting commons features.
 
 Features:
@@ -8,24 +9,25 @@ Features:
 * Process both xml and single event line files.
 * It is possible to set both number of events or max time in seconds to inject events to channel
 
-#Compilation
+### Compilation
 ```
 mvn clean package
 ```
 
-#Dependecies
+### Dependecies
 This project depends on next libs:
 * jpathwatch (v 0.95)
 * metrics-core (v 3.1.1)
 * stax
 * This source uses streams, so be sure to execute under a Java8 enviroment
 
-#Use
-Make the directory in flume installation path ```$FLUME_HOME/plugins.d/watchdir-v2/lib``` and copy the file   ```watchdir--X.Y.Z.jar```.  
+### Use
+Make the directory in flume installation path ```$FLUME_HOME/plugins.d/watchdir-v2/lib``` and copy the file   ```watchdir--X.Y.Z.jar```.
 Edit flume configuration file with the parameters above.
 
-#Configuration
-##Configuration for XML files
+### Configuration
+1.**Configuration for XML files:**
+
 | Property Name | Default | Description |
 | ------------- | :-----: | :---------- |
 | Channels | - |  |
@@ -46,9 +48,10 @@ Edit flume configuration file with the parameters above.
 |pathtoser|true|The .ser file used by the recovery mecanism|
 |timetoser|true|Time to generate ser file used by the recovery mecanism|
 
-##Configuration for single line events files
-| Property Name | Default | Description |
-| ------------- | :-----: | :---------- |
+2.**Configuration for single line events files:**
+
+|Property Name|Default|Description|
+|-------------|-------|-----------|
 | Channels | - |  |
 | Type | - | org.keedio.flume.source.watchdir.listener.simpletxtsource.FileEventSourceListener |
 | dirs.1.dir | - | directory to be monitorized (only one) |
@@ -71,8 +74,8 @@ Edit flume configuration file with the parameters above.
 |autocommittime|10|Number of seconds until channel injection|
 |maxcharsonmessage|100000|Max characters for messages events, if greater then message is discarded|
 
+3.**Configuration for multiline events files:**
 
-##Configuration for multiline events files
 | Property Name | Default | Description |
 | ------------- | :-----: | :---------- |
 | Channels | - |  |
