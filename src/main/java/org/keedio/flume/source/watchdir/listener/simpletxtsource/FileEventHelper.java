@@ -164,45 +164,47 @@ public class FileEventHelper {
     }
 
     List<String> linesToProc;
-
+    int numLines = 0;
     try (BufferedReader br = getBufferedReader(path)) {
+      
       //skip the first line and the columns length to get the data
       //columns are identified as being splittable on the delimiter
-      linesToProc = br.lines().skip(lastLine).map(s -> (String)s).collect(Collectors.toList());
+      //linesToProc = br.lines().skip(lastLine).map(s -> (String)s).collect(Collectors.toList());
+      String line = null;
+      while ((line = br.readLine()) != null) {
+        numLines++;
+        LOGGER.debug(String.format("%s(%s):Se procesa linea: %s", path, inode, line));
+        if (lineReadListener != null){
+          lineReadListener.lineRead(line);
+        }
+  
+        if (line.length() > listener.maxchars) {
+          LOGGER.debug(String.format("Se superan el tamaño máximo, descartamos el mensaje --> %s", line));
+          continue;
+        }
+  
+        Event ev = EventBuilder.withBody(line.getBytes());
+  
+        //Obtenemos los headers para el evento
+        Map<String, String> headers = createEventHeaders(path);
+  
+        if (!headers.isEmpty()) {
+            ev.setHeaders(headers);
+        }
+  
+        getBuffer().add(ev);
+  
+        // Notificamos un evento de nuevo mensaje
+        listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.NEW_EVENT));
+      }
     } catch (Exception e) {
       throw new RuntimeException(e);
-    }		
-
-    for (String line : linesToProc) {
-      LOGGER.debug(String.format("%s(%s):Se procesa linea: %s", path, inode, line));
-      if (lineReadListener != null){
-        lineReadListener.lineRead(line);
-      }
-
-      if (line.length() > listener.maxchars) {
-        LOGGER.debug(String.format("Se superan el tamaño máximo, descartamos el mensaje --> %s", line));
-        continue;
-      }
-
-      Event ev = EventBuilder.withBody(line.getBytes());
-
-      //Obtenemos los headers para el evento
-      Map<String, String> headers = createEventHeaders(path);
-
-      if (!headers.isEmpty()) {
-          ev.setHeaders(headers);
-      }
-
-      getBuffer().add(ev);
-
-      // Notificamos un evento de nuevo mensaje
-      listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.NEW_EVENT));
-
     }
 
-    LOGGER.debug(String.format("%s(%s):Se procesa actualiza de %d a %d", path, inode, lastLine, lastLine+linesToProc.size()));
 
-    listener.getFilesObserved().get(inode).setPosition(lastLine+linesToProc.size());
+    LOGGER.debug(String.format("%s(%s):Se procesa actualiza de %d a %d", path, inode, lastLine, lastLine+numLines));
+
+    listener.getFilesObserved().get(inode).setPosition(lastLine+numLines);
 
     // Lanzamos los eventos del buffer si sobrepasamos el máximo
     synchronized (mutex) {
