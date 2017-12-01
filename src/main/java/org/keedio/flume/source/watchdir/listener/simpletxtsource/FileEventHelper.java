@@ -26,6 +26,8 @@ import java.util.stream.Collectors;
  *
  */
 public class FileEventHelper {
+  
+  public static final Object mutex = new Object();
 
   private static final Logger LOGGER = LoggerFactory
       .getLogger(FileEventHelper.class);
@@ -97,12 +99,16 @@ public class FileEventHelper {
       } else {
           //listener.getChannelProcessor().processEventBatch(getBuffer());
           LOGGER.debug("commitPendings ===> Send ALL events to channel");
-          accessor.sendEventsToChannel(getBuffer());
+          synchronized (mutex) {
+            accessor.sendEventsToChannel(getBuffer());
+          }
       }
       isComplete = true;
     } catch (ChannelException e) {
       LOGGER.error("No se han podido innyectar los eventos", e.getMessage());
-      LOGGER.error("Mensajes perdidos: " + getBuffer().size());
+      synchronized (mutex) {
+        LOGGER.error("Mensajes perdidos: " + getBuffer().size());
+      }
       // Borramos el buffer
       LOGGER.error("ERROR AL INYECTAR LOS DATOS EN EL CANAL. PARAMOS EL AGENTE.",e);
       Util.printFilesObserved(listener.getFilesObserved());
@@ -120,11 +126,16 @@ public class FileEventHelper {
       if (isComplete) {
           if (!listener.multilineActive) {
               //En caso de no haber tratamiento multilínea vaciamos el buffer
+            
+            synchronized (mutex) {
               getBuffer().clear();
+            }
           }
       } else {
           //Si ha habido algun problema vaciaremos el buffer independientemente si hay tratamiento multilinea o no
+        synchronized (mutex) {
           getBuffer().clear();
+        }
       }
 
     }
@@ -194,17 +205,19 @@ public class FileEventHelper {
     listener.getFilesObserved().get(inode).setPosition(lastLine+linesToProc.size());
 
     // Lanzamos los eventos del buffer si sobrepasamos el máximo
-    if (getBuffer().size() > listener.eventsCapacity) {
+    synchronized (mutex) {
+      if (getBuffer().size() > listener.eventsCapacity) {
 
         LOGGER.debug("processInode ==> events capacity excedeed");
         if (listener.multilineActive) {
-            processEventBatch();
+          processEventBatch();
         } else {
-            //listener.getChannelProcessor().processEventBatch(getBuffer());
-            accessor.sendEventsToChannel(getBuffer());
-            getBuffer().clear();
+          //listener.getChannelProcessor().processEventBatch(getBuffer());
+          accessor.sendEventsToChannel(getBuffer());
+          getBuffer().clear();
         }
 
+      }
     }
 
   }
