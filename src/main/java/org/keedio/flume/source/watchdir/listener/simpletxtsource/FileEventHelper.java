@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -26,207 +27,209 @@ import java.util.stream.Collectors;
  *
  */
 public class FileEventHelper {
-  
-  public static final Object mutex = new Object();
+    public static final Object mutex = new Object();
 
-  private static final Logger LOGGER = LoggerFactory
-      .getLogger(FileEventHelper.class);
+    private static final Logger LOGGER = LoggerFactory
+            .getLogger(FileEventHelper.class);
 
-  protected static final String FILEHEADERNAME_FAKE = "fileHeaderNameFake";
+    protected static final String FILEHEADERNAME_FAKE = "fileHeaderNameFake";
 
 
-  private List<Integer> listIndexToRemove;
-  private Map<String, TreeMap<Integer,Event>> mapPendingEvents;
-  private List<Event> listEventToProcess;
+    private List<Integer> listIndexToRemove;
+    private Map<String, TreeMap<Integer,Event>> mapPendingEvents;
+    private List<Event> listEventToProcess;
 
-  private ChannelAccessor accessor;
-  FileEventSourceListener listener;
-  private List<Event> buffer;
-  private LineReadListener lineReadListener;
-  
-  public void setLineReadListener(LineReadListener lineReadListener){
-    this.lineReadListener = lineReadListener;
-  }
+    private ChannelAccessor accessor;
+    FileEventSourceListener listener;
+    private List<Event> buffer;
+    private LineReadListener lineReadListener;
 
-  public FileEventHelper(FileEventSourceListener listener) {
-    this.accessor = ChannelAccessor.getInstance();
-    this.listener = listener;
-    //this.buffer = new ArrayList<>();
-    this.buffer = new Vector<Event>();
-  }
-
-  public synchronized List<Event> getBuffer() {
-    return buffer;
-  }
-
-  public void process(String inode) {
-    String path = "";
-    try {
-      Date inicio = new Date();
-      int procesados = 0;
-      path = this.listener.getFilesObserved().get(inode).getFileName();
-      LOGGER.debug("Processing inode:" + inode + ", path: " + path);
-      File file = new File(path);
-      
-      if (file.exists()) {
-        readLines(inode);
-
-        long intervalo = new Date().getTime() - inicio.getTime();
-
-        // Notificamos el tiempo de procesado para las metricas
-        listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.MEAN_FILE_PROCESS, intervalo));
-        listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.TOTAL_FILE_EVENTS, procesados));
-
-      } else {
-        LOGGER.warn("File '" + file + "' associated with inode '"+inode+"' does not exists and cannot be processed.");
-      }
-    } catch (Exception e) {
-      LOGGER.error("Error procesando el fichero: " + path, e);
+    public void setLineReadListener(LineReadListener lineReadListener){
+        this.lineReadListener = lineReadListener;
     }
-  }
 
-  public void commitPendings() {
+    public FileEventHelper(FileEventSourceListener listener) {
+        this.accessor = ChannelAccessor.getInstance();
+        this.listener = listener;
+        //this.buffer = new ArrayList<>();
+        this.buffer = new Vector<Event>();
+    }
 
+    public synchronized List<Event> getBuffer() {
+        return buffer;
+    }
 
-    boolean isComplete = false;
+    public void process(String inode) {
+        String path = "";
+        try {
+            Date inicio = new Date();
+            int procesados = 0;
+            path = this.listener.getFilesObserved().get(inode).getFileName();
+            LOGGER.debug("Processing inode:" + inode + ", path: " + path);
+            File file = new File(path);
 
-    LOGGER.debug("BEGIN commitPendings");
-    try {
+            if (file.exists()) {
+                readLines(inode);
 
-      //Si se encuentra activo el tratamiento multilínea realizamos el procesamiento del buffer
-      if (listener.multilineActive) {
-          processEventBatch();
-      } else {
-          //listener.getChannelProcessor().processEventBatch(getBuffer());
-          LOGGER.debug("commitPendings ===> Send ALL events to channel");
-          synchronized (mutex) {
-            accessor.sendEventsToChannel(getBuffer());
-          }
-      }
-      isComplete = true;
-    } catch (ChannelException e) {
-      LOGGER.error("No se han podido innyectar los eventos", e.getMessage());
-      synchronized (mutex) {
-        LOGGER.error("Mensajes perdidos: " + getBuffer().size());
-      }
-      // Borramos el buffer
-      LOGGER.error("ERROR AL INYECTAR LOS DATOS EN EL CANAL. PARAMOS EL AGENTE.",e);
-      Util.printFilesObserved(listener.getFilesObserved());
-      listener.stop();
-    } catch (Exception e) {
-      LOGGER.error("Excepcion general por los interceptores.",e);
+                long intervalo = new Date().getTime() - inicio.getTime();
 
-      Util.printFilesObserved(listener.getFilesObserved());
-    } catch (Throwable e) {
-      LOGGER.error("Excepcion tipo throiwable por los interceptores.",e);
+                // Notificamos el tiempo de procesado para las metricas
+                listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.MEAN_FILE_PROCESS, intervalo));
+                listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.TOTAL_FILE_EVENTS, procesados));
 
-      Util.printFilesObserved(listener.getFilesObserved());
-    } finally {
-
-      if (isComplete) {
-          if (!listener.multilineActive) {
-              //En caso de no haber tratamiento multilínea vaciamos el buffer
-            
-            synchronized (mutex) {
-              getBuffer().clear();
+            } else {
+                LOGGER.warn("File '" + file + "' associated with inode '"+inode+"' does not exists and cannot be processed.");
             }
-          }
-      } else {
-          //Si ha habido algun problema vaciaremos el buffer independientemente si hay tratamiento multilinea o no
+        } catch (Exception e) {
+            LOGGER.error("Error procesando el fichero: " + path, e);
+        }
+    }
+
+    public void commitPendings() {
+
+
+        boolean isComplete = false;
+
+        LOGGER.debug("BEGIN commitPendings");
+        try {
+
+            //Si se encuentra activo el tratamiento multilínea realizamos el procesamiento del buffer
+            if (listener.multilineActive) {
+                processEventBatch();
+            } else {
+                //listener.getChannelProcessor().processEventBatch(getBuffer());
+                LOGGER.debug("commitPendings ===> Send ALL events to channel");
+                synchronized (mutex) {
+                    accessor.sendEventsToChannel(getBuffer());
+                }
+            }
+            isComplete = true;
+        } catch (ChannelException e) {
+            LOGGER.error("No se han podido innyectar los eventos", e.getMessage());
+            synchronized (mutex) {
+                LOGGER.error("Mensajes perdidos: " + getBuffer().size());
+            }
+            // Borramos el buffer
+            LOGGER.error("ERROR AL INYECTAR LOS DATOS EN EL CANAL. PARAMOS EL AGENTE.",e);
+            Util.printFilesObserved(listener.getFilesObserved());
+            listener.stop();
+        } catch (Exception e) {
+            LOGGER.error("Excepcion general por los interceptores.",e);
+
+            Util.printFilesObserved(listener.getFilesObserved());
+        } catch (Throwable e) {
+            LOGGER.error("Excepcion tipo throiwable por los interceptores.",e);
+
+            Util.printFilesObserved(listener.getFilesObserved());
+        } finally {
+
+            if (isComplete) {
+                if (!listener.multilineActive) {
+                    //En caso de no haber tratamiento multilínea vaciamos el buffer
+                    synchronized (mutex) {
+                        getBuffer().clear();
+                    }
+                }
+            } else {
+                //Si ha habido algun problema vaciaremos el buffer independientemente si hay tratamiento multilinea o no
+                synchronized (mutex) {
+                    getBuffer().clear();
+                }
+            }
+
+        }
+
+        LOGGER.debug("END commitPendings");
+
+    }
+
+    private void  readLines(String inode) throws Exception {
+
+        LOGGER.debug("ENTRAMOS EN EL HELPER......");
+        //
+        Long lastByte = 0L;
+        processInode(this.listener.getFilesObserved().get(inode).getFileName(), inode);
+
+    }
+
+    private void processInode(String path, String inode) throws Exception {
+
+        Long lastLine = listener.getFilesObserved().get(inode).getPosition();
+        LOGGER.debug(String.format("Se procesa el fichero %s(%s) desde la linea %d", path, inode, lastLine));
+
+        if (lastLine < 0) {
+            LOGGER.debug(String.format("Negative lastByte: %d", lastLine));
+            return;
+        }
+
+        //List<String> linesToProc;
+        Long numLines = 0L;
+        try (BufferedReader br = getBufferedReader(path)) {
+            //skip the first line and the columns length to get the data
+            //columns are identified as being splittable on the delimiter
+            //linesToProc = br.lines().skip(lastLine).map(s -> (String)s).collect(Collectors.toList());
+            String line = null;
+
+            //move pointer to latest processed line
+            for(long i = 0; i < lastLine ; i++) {
+                br.readLine();
+            }
+
+            while ((line = br.readLine()) != null) {
+                numLines++;
+                LOGGER.debug(String.format("%s(%s):Se procesa linea: %s", path, inode, line));
+                if (lineReadListener != null){
+                    lineReadListener.lineRead(line);
+                }
+
+                if (line.length() > listener.maxchars) {
+                    LOGGER.debug(String.format("Se superan el tamaño máximo, descartamos el mensaje --> %s", line));
+                    continue;
+                }
+
+                Event ev = EventBuilder.withBody(line.getBytes());
+
+                //Obtenemos los headers para el evento
+                Map<String, String> headers = createEventHeaders(path);
+
+                if (!headers.isEmpty()) {
+                    ev.setHeaders(headers);
+                }
+
+                getBuffer().add(ev);
+
+                // Notificamos un evento de nuevo mensaje
+                listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.NEW_EVENT));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        LOGGER.debug(String.format("%s(%s):Se procesa actualiza de %d a %d", path, inode, lastLine, lastLine+numLines));
+
+        listener.getFilesObserved().get(inode).setPosition(lastLine+numLines);
+
+        // Lanzamos los eventos del buffer si sobrepasamos el máximo
         synchronized (mutex) {
-          getBuffer().clear();
+            if (getBuffer().size() > listener.eventsCapacity) {
+
+                LOGGER.debug("processInode ==> events capacity excedeed");
+                if (listener.multilineActive) {
+                    processEventBatch();
+                } else {
+                    //listener.getChannelProcessor().processEventBatch(getBuffer());
+                    accessor.sendEventsToChannel(getBuffer());
+                    getBuffer().clear();
+                }
+
+            }
         }
-      }
 
     }
 
-    LOGGER.debug("END commitPendings");
-
-  }
-
-  private void  readLines(String inode) throws Exception {
-
-    LOGGER.debug("ENTRAMOS EN EL HELPER......");
-    //
-    Long lastByte = 0L;
-    processInode(this.listener.getFilesObserved().get(inode).getFileName(), inode);
-
-  }
-
-  private void processInode(String path, String inode) throws Exception {
-
-    Long lastLine = listener.getFilesObserved().get(inode).getPosition();
-    LOGGER.debug(String.format("Se procesa el fichero %s(%s) desde la linea %d", path, inode, lastLine));
-
-    if (lastLine < 0) {
-      LOGGER.debug(String.format("Negative lastByte: %d", lastLine));
-      return;
+    private static BufferedReader getBufferedReader(String fileName) throws FileNotFoundException {
+        return new BufferedReader(new FileReader(fileName));
     }
-
-    List<String> linesToProc;
-    int numLines = 0;
-    try (BufferedReader br = getBufferedReader(path)) {
-      
-      //skip the first line and the columns length to get the data
-      //columns are identified as being splittable on the delimiter
-      //linesToProc = br.lines().skip(lastLine).map(s -> (String)s).collect(Collectors.toList());
-      String line = null;
-      while ((line = br.readLine()) != null) {
-        numLines++;
-        LOGGER.debug(String.format("%s(%s):Se procesa linea: %s", path, inode, line));
-        if (lineReadListener != null){
-          lineReadListener.lineRead(line);
-        }
-  
-        if (line.length() > listener.maxchars) {
-          LOGGER.debug(String.format("Se superan el tamaño máximo, descartamos el mensaje --> %s", line));
-          continue;
-        }
-  
-        Event ev = EventBuilder.withBody(line.getBytes());
-  
-        //Obtenemos los headers para el evento
-        Map<String, String> headers = createEventHeaders(path);
-  
-        if (!headers.isEmpty()) {
-            ev.setHeaders(headers);
-        }
-  
-        getBuffer().add(ev);
-  
-        // Notificamos un evento de nuevo mensaje
-        listener.getMetricsController().manage(new MetricsEvent(MetricsEvent.NEW_EVENT));
-      }
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-
-
-    LOGGER.debug(String.format("%s(%s):Se procesa actualiza de %d a %d", path, inode, lastLine, lastLine+numLines));
-
-    listener.getFilesObserved().get(inode).setPosition(lastLine+numLines);
-
-    // Lanzamos los eventos del buffer si sobrepasamos el máximo
-    synchronized (mutex) {
-      if (getBuffer().size() > listener.eventsCapacity) {
-
-        LOGGER.debug("processInode ==> events capacity excedeed");
-        if (listener.multilineActive) {
-          processEventBatch();
-        } else {
-          //listener.getChannelProcessor().processEventBatch(getBuffer());
-          accessor.sendEventsToChannel(getBuffer());
-          getBuffer().clear();
-        }
-
-      }
-    }
-
-  }
-
-  private static BufferedReader getBufferedReader(String fileName) throws FileNotFoundException {
-    return new BufferedReader(new FileReader(fileName));
-  }
 
 
     /**
@@ -256,40 +259,66 @@ public class FileEventHelper {
 
             //En funcion del parametro negate la forma de procesar el buffer de eventos sera diferente
             if (!listener.multilineNegateRegex) {
-              //Se consideran que aquellos eventos que satisfacen la expresion regular son eventos multilínea.
+                //Se consideran que aquellos eventos que satisfacen la expresion regular son eventos multilínea.
 
-              if (isSimpleLineEvent(eventBuffer)) {
-                  //Se trata de un evento de linea simple
+                if (isSimpleLineEvent(eventBuffer)) {
+                    //Se trata de un evento de linea simple
 
-                  //Procesamos los eventos pendientes que pudieran existir para ese mismo fichero
-                  Event joinedEvent = processPendingEventsFile(eventBuffer);
-                  if (joinedEvent != null) {
+                    //Procesamos los eventos pendientes que pudieran existir para ese mismo fichero
+                    Event joinedEvent = processPendingEventsFile(eventBuffer);
+                    if (joinedEvent != null) {
 
-                      //Si la cabecera fuera ficticia la removemos
-                      if (!listener.fileHeader) {
-                          joinedEvent.getHeaders().remove(FILEHEADERNAME_FAKE);
-                      }
+                        //Si la cabecera fuera ficticia la removemos
+                        if (!listener.fileHeader) {
+                            joinedEvent.getHeaders().remove(FILEHEADERNAME_FAKE);
+                        }
 
-                      listEventToProcess.add(joinedEvent);
-
-
-                  }
+                        listEventToProcess.add(joinedEvent);
 
 
-                  //El evento actual tiene que ser procesado en Flume. Si la cabecera fuera ficticia la removemos
-                  if (!listener.fileHeader) {
-                      eventBuffer.getHeaders().remove(FILEHEADERNAME_FAKE);
-                  }
+                    }
 
-                  listEventToProcess.add(eventBuffer);
 
-                  //El indice del elemento se indica para su posterior borrado del buffer
-                  listIndexToRemove.add(index);
+                    //El evento actual tiene que ser procesado en Flume. Si la cabecera fuera ficticia la removemos
+                    if (!listener.fileHeader) {
+                        eventBuffer.getHeaders().remove(FILEHEADERNAME_FAKE);
+                    }
 
-              } else {
+                    listEventToProcess.add(eventBuffer);
 
-                  if (isMultilineFirstLineEvent(eventBuffer)) {
-                    //Se trata de la primera línea de un evento multilínea
+                    //El indice del elemento se indica para su posterior borrado del buffer
+                    listIndexToRemove.add(index);
+
+                } else {
+
+                    if (isMultilineFirstLineEvent(eventBuffer)) {
+                        //Se trata de la primera línea de un evento multilínea
+
+                        //Procesamos los eventos pendientes que pudieran existir para ese mismo fichero
+                        Event joinedEvent = processPendingEventsFile(eventBuffer);
+
+                        if (joinedEvent != null) {
+
+                            //Si la cabecera fuera ficticia la removemos
+                            if (!listener.fileHeader) {
+                                joinedEvent.getHeaders().remove(FILEHEADERNAME_FAKE);
+                            }
+
+                            listEventToProcess.add(joinedEvent);
+                        }
+
+                    }
+
+                    //Add el evento como pendiente para proceso.
+                    addEventPendingProcess(eventBuffer, index);
+
+                }
+
+            } else {
+                //Se consideran que los eventos que no satisfacen la expresion son multilinea. Un evento que la satisface puede tener más lineas asociadas o no
+
+                if (isSimpleLineEvent(eventBuffer)) {
+                    //Se trata de un evento que no es la continuacion de linea de otro
 
                     //Procesamos los eventos pendientes que pudieran existir para ese mismo fichero
                     Event joinedEvent = processPendingEventsFile(eventBuffer);
@@ -304,36 +333,10 @@ public class FileEventHelper {
                         listEventToProcess.add(joinedEvent);
                     }
 
-                  }
+                }
 
-                  //Add el evento como pendiente para proceso.
-                  addEventPendingProcess(eventBuffer, index);
-
-              }
-
-            } else {
-              //Se consideran que los eventos que no satisfacen la expresion son multilinea. Un evento que la satisface puede tener más lineas asociadas o no
-
-              if (isSimpleLineEvent(eventBuffer)) {
-                  //Se trata de un evento que no es la continuacion de linea de otro
-
-                  //Procesamos los eventos pendientes que pudieran existir para ese mismo fichero
-                  Event joinedEvent = processPendingEventsFile(eventBuffer);
-
-                  if (joinedEvent != null) {
-
-                      //Si la cabecera fuera ficticia la removemos
-                      if (!listener.fileHeader) {
-                          joinedEvent.getHeaders().remove(FILEHEADERNAME_FAKE);
-                      }
-
-                      listEventToProcess.add(joinedEvent);
-                  }
-
-              }
-
-              //Add el evento como pendiente para proceso.
-              addEventPendingProcess(eventBuffer, index);
+                //Add el evento como pendiente para proceso.
+                addEventPendingProcess(eventBuffer, index);
 
             }
 
@@ -384,9 +387,9 @@ public class FileEventHelper {
         //Eliminamos del buffer los elementos seleccionados para su borrado. El borrado lo efectuado en orden inverso
         ListIterator<Integer> listIndexesRemoveIterator = listIndexToRemove.listIterator(listIndexToRemove.size());
         while (listIndexesRemoveIterator.hasPrevious()) {
-          int indexToRemove = listIndexesRemoveIterator.previous();
+            int indexToRemove = listIndexesRemoveIterator.previous();
 
-          buffer.remove(indexToRemove);
+            buffer.remove(indexToRemove);
         }
         LOGGER.debug("processEventBatch ==> Buffer size POST remove index: " + buffer.size());
 
