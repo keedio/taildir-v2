@@ -6,7 +6,7 @@ import java.io.Serializable;
  * Created by rolmo on 17/12/15.
  */
 public class InodeInfo implements Serializable {
-
+    private static final long serialVersionUID = 1273002392850232629L;
     private String fileName;
     private Long position;
 
