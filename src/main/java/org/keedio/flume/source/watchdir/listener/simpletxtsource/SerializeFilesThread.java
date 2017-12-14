@@ -69,7 +69,7 @@ public class SerializeFilesThread implements Runnable {
     }
 
     public void fromMapToSerFile() throws Exception {
-        LOGGER.info("fromMapToSerFile: writing ser file with the following content: " + listener.getFilesObserved());
+        LOGGER.debug("fromMapToSerFile: writing ser file with the following content: " + listener.getFilesObserved());
 
         try {
             FileUtils.copyFile(new File(path), new File(path + ".bck"));
