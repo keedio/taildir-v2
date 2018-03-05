@@ -100,7 +100,7 @@ public class WatchDirXMLWinEventSourceListener extends AbstractSource implements
 	public void configure(Context context) {
 		LOGGER.info("Source Configuring..");
 
-		metricsController = new MetricsController();
+		metricsController = new MetricsController("SOURCE." + getName());
 		
 		Map<String, String> criterias = context.getSubProperties(CONFIG_DIRS);
 		Map getCriterias = getMapProperties(criterias);

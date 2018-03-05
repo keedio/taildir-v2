@@ -168,7 +168,7 @@ public class FileEventSourceListener extends AbstractSource implements
         LOGGER.info("Source Configuring..");
         LOGGER.info("Starting taildir agent "+printVersionNumber());
         
-        metricsController = new MetricsController();
+        metricsController = new MetricsController("SOURCE." + getName());
 
         Map<String, String> criterias = context.getSubProperties(CONFIG_DIRS);
         Map getCriterias = getMapProperties(criterias);

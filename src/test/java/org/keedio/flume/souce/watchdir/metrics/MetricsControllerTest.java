@@ -12,7 +12,7 @@ public class MetricsControllerTest {
 	@Test
 	public void testManageTotalFiles() {
 		// Arrange
-		MetricsController mc = new MetricsController();
+		MetricsController mc = new MetricsController("testManageTotalFiles");
 		MetricsEvent ev = new MetricsEvent(MetricsEvent.NEW_FILE);
 		
 		// Act
@@ -26,7 +26,7 @@ public class MetricsControllerTest {
 	@Test
 	public void testManageTotalEvents() {
 		// Arrange
-		MetricsController mc = new MetricsController();
+		MetricsController mc = new MetricsController("testManageTotalEvents");
 		MetricsEvent ev = new MetricsEvent(MetricsEvent.NEW_EVENT);
 		
 		// Act
@@ -40,7 +40,7 @@ public class MetricsControllerTest {
 	@Test
 	public void testManageMeanEventFiles() {
 		// Arrange
-		MetricsController mc = new MetricsController();
+		MetricsController mc = new MetricsController("testManageMeanEventFiles");
 		MetricsEvent ev1 = new MetricsEvent(MetricsEvent.TOTAL_FILE_EVENTS, 30);
 		MetricsEvent ev2 = new MetricsEvent(MetricsEvent.TOTAL_FILE_EVENTS, 30);
 		

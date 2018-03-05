@@ -44,8 +44,8 @@ public class MetricsController extends MonitoredCounterGroup implements MetricsM
 			"source.median.file.events"
 	};
 	
-	public MetricsController() {
-		super(MonitoredCounterGroup.Type.SOURCE, MetricsController.class.getName(), ATTRIBUTES);
+	public MetricsController(String name) {
+		super(MonitoredCounterGroup.Type.SOURCE, name, ATTRIBUTES);
 		
 		metrics = new MetricRegistry();
 		meterEvents = metrics.meter("events");
