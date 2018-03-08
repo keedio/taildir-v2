@@ -97,10 +97,11 @@ public class FileEventHelper {
             if (listener.multilineActive) {
                 processEventBatch();
             } else {
-                //listener.getChannelProcessor().processEventBatch(getBuffer());
+
                 LOGGER.debug("commitPendings ===> Send ALL events to channel");
                 synchronized (mutex) {
-                    accessor.sendEventsToChannel(getBuffer());
+                    listener.getChannelProcessor().processEventBatch(getBuffer());
+                    //accessor.sendEventsToChannel(getBuffer());
                 }
             }
             isComplete = true;
@@ -217,9 +218,12 @@ public class FileEventHelper {
                 if (listener.multilineActive) {
                     processEventBatch();
                 } else {
-                    //listener.getChannelProcessor().processEventBatch(getBuffer());
-                    accessor.sendEventsToChannel(getBuffer());
-                    getBuffer().clear();
+                    synchronized (mutex) {
+                        listener.getChannelProcessor().processEventBatch(getBuffer());
+                        //accessor.sendEventsToChannel(getBuffer());
+                        getBuffer().clear();
+                    }
+
                 }
 
             }
@@ -372,9 +376,9 @@ public class FileEventHelper {
         LOGGER.debug("processEventBatch ==> eventos a enviar a channel: " + listEventToProcess.size());
         //Procesamos la lista de eventos a enviar a Flume
         if (listEventToProcess.size() > 0) {
-            //listener.getChannelProcessor().processEventBatch(listEventToProcess);
             LOGGER.debug("processEventBatch ====> send Events to channel");
-            accessor.sendEventsToChannel(listEventToProcess);
+            listener.getChannelProcessor().processEventBatch(listEventToProcess);
+            //accessor.sendEventsToChannel(listEventToProcess);
             clearListEventToProcess();
         }
 
